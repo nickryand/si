@@ -6,19 +6,17 @@ use authentication::AuthBinding;
 use itertools::Itertools;
 use leaf::LeafBinding;
 use serde::{Deserialize, Serialize};
+use si_id::{AttributePrototypeArgumentId, FuncArgumentId};
 use strum::{Display, EnumDiscriminants};
 use telemetry::prelude::*;
 use thiserror::Error;
 
 use crate::action::prototype::{ActionKind, ActionPrototypeError};
 use crate::attribute::prototype::argument::value_source::ValueSource;
-use crate::attribute::prototype::argument::{
-    AttributePrototypeArgumentError, AttributePrototypeArgumentId,
-};
+use crate::attribute::prototype::argument::AttributePrototypeArgumentError;
 use crate::attribute::prototype::AttributePrototypeError;
 use crate::attribute::value::AttributeValueError;
 use crate::func::argument::FuncArgumentError;
-use crate::func::argument::FuncArgumentId;
 use crate::func::binding::attribute::AttributeBindingMalformedInput;
 use crate::func::FuncKind;
 use crate::prop::PropError;

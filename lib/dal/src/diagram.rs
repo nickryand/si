@@ -1,14 +1,13 @@
 use serde::{Deserialize, Serialize};
 use si_data_pg::PgError;
+use si_id::AttributePrototypeArgumentId;
 use std::collections::HashMap;
 use std::num::{ParseFloatError, ParseIntError};
 use std::sync::Arc;
 use telemetry::prelude::*;
 use thiserror::Error;
 
-use crate::attribute::prototype::argument::{
-    AttributePrototypeArgumentError, AttributePrototypeArgumentId,
-};
+use crate::attribute::prototype::argument::AttributePrototypeArgumentError;
 use crate::attribute::value::AttributeValueError;
 use crate::change_status::ChangeStatus;
 use crate::component::inferred_connection_graph::InferredConnectionGraph;

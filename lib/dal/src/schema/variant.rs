@@ -6,14 +6,14 @@ use std::sync::Arc;
 use chrono::Utc;
 use petgraph::{Direction, Outgoing};
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
-use url::ParseError;
-
 use si_events::{ulid::Ulid, ContentHash};
 use si_frontend_types::SchemaVariant as FrontendVariant;
+use si_id::SchemaVariantId;
 use si_layer_cache::LayerDbError;
 use si_pkg::SpecError;
 use telemetry::prelude::*;
+use thiserror::Error;
+use url::ParseError;
 
 use crate::action::prototype::{ActionKind, ActionPrototype};
 use crate::attribute::prototype::argument::{
@@ -45,7 +45,7 @@ use crate::workspace_snapshot::{
     WorkspaceSnapshotError,
 };
 use crate::{
-    implement_add_edge_to, pk,
+    implement_add_edge_to,
     schema::variant::leaves::{LeafInput, LeafInputLocation, LeafKind},
     ActionPrototypeId, AttributePrototype, AttributePrototypeId, ChangeSetId, ComponentId,
     ComponentType, DalContext, Func, FuncId, HelperError, InputSocket, OutputSocket,
@@ -174,21 +174,6 @@ pub enum SchemaVariantError {
 }
 
 pub type SchemaVariantResult<T> = Result<T, SchemaVariantError>;
-
-// TODO(nick): replace this with "id!" once "nilId" explodes and dies.
-pk!(SchemaVariantId);
-
-impl From<si_events::SchemaVariantId> for SchemaVariantId {
-    fn from(value: si_events::SchemaVariantId) -> Self {
-        Self(value.into_raw_id())
-    }
-}
-
-impl From<SchemaVariantId> for si_events::SchemaVariantId {
-    fn from(value: SchemaVariantId) -> Self {
-        Self::from_raw_id(value.0)
-    }
-}
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct SchemaVariant {

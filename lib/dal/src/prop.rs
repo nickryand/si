@@ -2,7 +2,7 @@ use async_recursion::async_recursion;
 use petgraph::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use si_events::ContentHash;
+use si_events::{ContentHash, PropId};
 use si_pkg::PropSpecKind;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
@@ -26,7 +26,7 @@ use crate::workspace_snapshot::node_weight::traits::SiNodeWeight;
 use crate::workspace_snapshot::node_weight::{NodeWeight, NodeWeightError, PropNodeWeight};
 use crate::workspace_snapshot::WorkspaceSnapshotError;
 use crate::{
-    id, implement_add_edge_to, label_list::ToLabelList, property_editor::schema::WidgetKind,
+    implement_add_edge_to, label_list::ToLabelList, property_editor::schema::WidgetKind,
     AttributePrototype, AttributePrototypeId, DalContext, Func, FuncBackendResponseType, FuncId,
     HelperError, SchemaVariant, SchemaVariantError, SchemaVariantId, Timestamp, TransactionsError,
 };
@@ -89,20 +89,6 @@ pub type PropResult<T> = Result<T, PropError>;
 
 pub const SECRET_KIND_WIDGET_OPTION_LABEL: &str = "secretKind";
 
-id!(PropId);
-
-impl From<si_events::PropId> for PropId {
-    fn from(value: si_events::PropId) -> Self {
-        Self(value.into_raw_id())
-    }
-}
-
-impl From<PropId> for si_events::PropId {
-    fn from(value: PropId) -> Self {
-        Self::from_raw_id(value.0)
-    }
-}
-
 // TODO: currently we only have string values in all widget_options but we should extend this to
 // support other types. However, we cannot use serde_json::Value since postcard will not
 // deserialize into a serde_json::Value.
@@ -111,6 +97,7 @@ pub struct WidgetOption {
     label: String,
     pub value: String,
 }
+
 pub type WidgetOptions = Vec<WidgetOption>;
 
 /// An individual "field" within the tree of a [`SchemaVariant`](crate::SchemaVariant).

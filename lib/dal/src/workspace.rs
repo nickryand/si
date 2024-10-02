@@ -3,7 +3,9 @@ use petgraph::Direction;
 use serde::{Deserialize, Serialize};
 use si_data_nats::NatsError;
 use si_data_pg::{PgError, PgRow};
-use si_events::{ContentHash, WorkspaceSnapshotAddress};
+use si_events::WorkspacePk;
+use si_events::{ContentHash, UserPk, WorkspaceSnapshotAddress};
+use si_id::ChangeSetId;
 use si_layer_cache::db::serialize;
 use si_layer_cache::LayerDbError;
 use si_pkg::{
@@ -18,15 +20,16 @@ use thiserror::Error;
 use ulid::Ulid;
 
 use crate::builtins::func::migrate_intrinsics_no_commit;
-use crate::change_set::{ChangeSet, ChangeSetError, ChangeSetId};
+use crate::change_set::{ChangeSet, ChangeSetError};
 use crate::feature_flags::FeatureFlag;
 use crate::layer_db_types::ContentTypes;
 use crate::workspace_snapshot::graph::WorkspaceSnapshotGraphDiscriminants;
 use crate::workspace_snapshot::WorkspaceSnapshotError;
+use crate::WorkspaceId;
 use crate::{
-    pk, standard_model, standard_model_accessor_ro, BuiltinsError, DalContext, HistoryActor,
+    standard_model, standard_model_accessor_ro, BuiltinsError, DalContext, HistoryActor,
     HistoryEvent, HistoryEventError, KeyPairError, StandardModelError, Tenancy, Timestamp,
-    TransactionsError, User, UserError, UserPk, WorkspaceSnapshot, WorkspaceSnapshotGraph,
+    TransactionsError, User, UserError, WorkspaceSnapshot, WorkspaceSnapshotGraph,
 };
 
 const WORKSPACE_GET_BY_PK: &str = include_str!("queries/workspace/get_by_pk.sql");
@@ -88,25 +91,6 @@ pub enum WorkspaceError {
 }
 
 pub type WorkspaceResult<T> = Result<T, WorkspaceError>;
-
-// TODO(nick): switch to "id!" once "nilId" dies and explodes.
-pk!(WorkspacePk);
-
-// TODO(nick): switch to "id!" once "nilId" dies and explodes.
-pk!(WorkspaceId);
-
-impl From<WorkspacePk> for si_events::WorkspacePk {
-    fn from(value: WorkspacePk) -> Self {
-        let id: ulid::Ulid = value.into();
-        id.into()
-    }
-}
-
-impl From<si_events::WorkspacePk> for WorkspacePk {
-    fn from(value: si_events::WorkspacePk) -> Self {
-        Self(value.into_raw_id())
-    }
-}
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Workspace {
@@ -516,10 +500,9 @@ impl Workspace {
                 queue.extend(children)
             }
 
-            let base_changeset = change_set
-                .base_change_set_id
-                .map(|id| id.into_inner())
-                .unwrap_or(Ulid::nil());
+            // NOTE(nick): no no no no no no no no no no no no no no NO NO NO NO NO NO NO!!!! NO NO NO NO NO NO NO
+            // NO NO NO... no... no no no no... NO... NO NO NO NO NO!!!!!
+            let base_changeset = change_set.base_change_set_id.unwrap_or(Ulid::nil());
 
             if change_set.id == self.default_change_set_id() {
                 default_change_set_base = base_changeset

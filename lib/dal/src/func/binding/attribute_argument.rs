@@ -1,13 +1,12 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use si_id::{AttributePrototypeArgumentId, FuncArgumentId};
 use strum::Display;
 
 use crate::{
     attribute::prototype::argument::{
         static_value::StaticArgumentValue, value_source::ValueSource, AttributePrototypeArgument,
-        AttributePrototypeArgumentId,
     },
-    func::argument::FuncArgumentId,
     DalContext, InputSocketId, OutputSocketId, PropId, SecretId,
 };
 

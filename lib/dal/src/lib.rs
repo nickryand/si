@@ -56,9 +56,7 @@ pub mod slow_rt;
 pub mod socket;
 pub mod standard_accessors;
 pub mod standard_connection;
-pub mod standard_id;
 pub mod standard_model;
-pub mod standard_pk;
 pub mod status;
 pub mod tenancy;
 pub mod timestamp;
@@ -69,26 +67,21 @@ pub mod workspace;
 pub mod workspace_snapshot;
 pub mod ws_event;
 
-pub use action::ActionPrototypeId;
 pub use actor_view::ActorView;
-pub use attribute::{
-    prototype::{AttributePrototype, AttributePrototypeId},
-    value::{AttributeValue, AttributeValueId},
-};
+pub use attribute::{prototype::AttributePrototype, value::AttributeValue};
 pub use builtins::{BuiltinsError, BuiltinsResult};
 pub use change_set::status::ChangeSetStatus;
 pub use change_set::ChangeSetApplyError;
-pub use change_set::{ChangeSet, ChangeSetError, ChangeSetId};
+pub use change_set::{ChangeSet, ChangeSetError};
 pub use component::Component;
 pub use component::ComponentError;
-pub use component::ComponentId;
 pub use context::{
     AccessBuilder, Connections, DalContext, DalContextBuilder, DalLayerDb, RequestContext,
     ServicesContext, Transactions, TransactionsError,
 };
 pub use func::{
     backend::{FuncBackendKind, FuncBackendResponseType},
-    Func, FuncError, FuncId,
+    Func, FuncError,
 };
 pub use history_event::{HistoryActor, HistoryEvent, HistoryEventError};
 pub use jetstream_streams::{JetstreamStreams, JetstreamStreamsError};
@@ -96,11 +89,9 @@ pub use job::processor::{JobQueueProcessor, NatsProcessor};
 pub use jwt_key::JwtPublicSigningKey;
 pub use key_pair::{KeyPair, KeyPairError, KeyPairResult, PublicKey};
 pub use label_list::{LabelEntry, LabelList, LabelListError};
-pub use prop::{Prop, PropId, PropKind};
+pub use prop::{Prop, PropKind};
 pub use schema::variant::root_prop::component_type::ComponentType;
-pub use schema::{
-    variant::SchemaVariantError, Schema, SchemaError, SchemaId, SchemaVariant, SchemaVariantId,
-};
+pub use schema::{variant::SchemaVariantError, Schema, SchemaError, SchemaVariant};
 pub use secret::EncryptedSecret;
 pub use secret::Secret;
 pub use secret::SecretAlgorithm;
@@ -108,7 +99,6 @@ pub use secret::SecretCreatedPayload;
 pub use secret::SecretDefinitionView;
 pub use secret::SecretDefinitionViewError;
 pub use secret::SecretError;
-pub use secret::SecretId;
 pub use secret::SecretResult;
 pub use secret::SecretUpdatedPayload;
 pub use secret::SecretVersion;
@@ -116,17 +106,17 @@ pub use secret::SecretView;
 pub use secret::SecretViewError;
 pub use si_events::WorkspaceSnapshotAddress;
 pub use si_events::{content_hash::ContentHash, ulid::Ulid};
-pub use socket::input::{InputSocket, InputSocketId};
-pub use socket::output::{OutputSocket, OutputSocketId};
+pub use socket::input::InputSocket;
+pub use socket::output::OutputSocket;
 pub use socket::SocketArity;
 pub use socket::SocketKind;
 pub use standard_connection::{HelperError, HelperResult};
 pub use standard_model::{StandardModel, StandardModelError, StandardModelResult};
 pub use tenancy::{Tenancy, TenancyError};
 pub use timestamp::{Timestamp, TimestampError};
-pub use user::{User, UserClaim, UserError, UserPk, UserResult};
+pub use user::{User, UserClaim, UserError, UserResult};
 pub use visibility::Visibility;
-pub use workspace::{Workspace, WorkspaceError, WorkspacePk, WorkspaceResult};
+pub use workspace::{Workspace, WorkspaceError, WorkspaceResult};
 pub use workspace_snapshot::graph::{
     WorkspaceSnapshotGraph, WorkspaceSnapshotGraphV3, WorkspaceSnapshotGraphVCurrent,
 };
@@ -137,6 +127,7 @@ pub use workspace_snapshot::{
 pub use workspace_snapshot::{WorkspaceSnapshot, WorkspaceSnapshotError};
 pub use ws_event::{WsEvent, WsEventError, WsEventResult, WsPayload};
 
+pub use si_id::*;
 pub use si_runtime::{
     compute_executor, DedicatedExecutor, DedicatedExecutorError, DedicatedExecutorInitializeError,
     DedicatedExecutorJoinError,

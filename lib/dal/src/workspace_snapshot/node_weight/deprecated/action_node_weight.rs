@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use si_events::{merkle_tree_hash::MerkleTreeHash, ulid::Ulid};
+use si_id::deprecated::FuncExecutionPk;
 
 use crate::{
     action::ActionState,
-    func::FuncExecutionPk,
     workspace_snapshot::{graph::LineageId, vector_clock::deprecated::DeprecatedVectorClock},
     ChangeSetId,
 };

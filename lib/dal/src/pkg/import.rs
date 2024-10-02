@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use si_events::ulid::Ulid;
+use si_id::{AttributePrototypeArgumentId, AuthenticationPrototypeId, ModuleId};
 use si_pkg::{
     SchemaVariantSpecPropRoot, SiPkg, SiPkgActionFunc, SiPkgAttrFuncInputView, SiPkgAuthFunc,
     SiPkgComponent, SiPkgEdge, SiPkgError, SiPkgFunc, SiPkgFuncArgument, SiPkgFuncData, SiPkgKind,
@@ -14,12 +15,12 @@ use telemetry::prelude::*;
 use tokio::sync::Mutex;
 
 use crate::attribute::prototype::argument::{
-    value_source::ValueSource, AttributePrototypeArgument, AttributePrototypeArgumentId,
+    value_source::ValueSource, AttributePrototypeArgument,
 };
-use crate::authentication_prototype::{AuthenticationPrototype, AuthenticationPrototypeId};
+use crate::authentication_prototype::AuthenticationPrototype;
 use crate::func;
 use crate::func::intrinsics::IntrinsicFunc;
-use crate::module::{Module, ModuleId};
+use crate::module::Module;
 use crate::schema::variant::SchemaVariantJson;
 use crate::socket::connection_annotation::ConnectionAnnotation;
 use crate::SocketKind;
@@ -557,7 +558,7 @@ async fn set_default_schema_variant_id(
         }
         (Some(variant_unique_id), Some(spec_default_unique_id)) => {
             if variant_unique_id == spec_default_unique_id {
-                // TODO(nick): make this not rely on "nilId" since those should explode and die.
+                // TODO(nick): replace this with "id!" once "nilId" explodes and dies.
                 let current_default_variant_id = schema
                     .get_default_schema_variant_id(ctx)
                     .await?

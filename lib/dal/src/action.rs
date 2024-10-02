@@ -3,7 +3,8 @@ use std::collections::{HashSet, VecDeque};
 use petgraph::prelude::*;
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
-use si_events::ulid::Ulid;
+use si_events::{ulid::Ulid, ActionId, ActionPrototypeId};
+use si_id::deprecated::FuncExecutionPk;
 use si_layer_cache::LayerDbError;
 use strum::{AsRefStr, Display, EnumDiscriminants, EnumIter, EnumString};
 use telemetry::prelude::*;
@@ -15,8 +16,7 @@ use crate::{
         prototype::{ActionKind, ActionPrototype, ActionPrototypeError},
     },
     attribute::value::{AttributeValueError, DependentValueGraph},
-    func::FuncExecutionPk,
-    id, implement_add_edge_to,
+    implement_add_edge_to,
     job::definition::ActionJob,
     workspace_snapshot::node_weight::{
         category_node_weight::CategoryNodeKind, ActionNodeWeight, NodeWeight, NodeWeightError,
@@ -61,22 +61,6 @@ pub enum ActionError {
 }
 
 pub type ActionResult<T> = Result<T, ActionError>;
-
-id!(ActionId);
-
-impl From<ActionId> for si_events::ActionId {
-    fn from(value: ActionId) -> Self {
-        value.into_inner().into()
-    }
-}
-
-id!(ActionPrototypeId);
-
-impl From<ActionPrototypeId> for si_events::ActionPrototypeId {
-    fn from(value: ActionPrototypeId) -> Self {
-        value.into_inner().into()
-    }
-}
 
 #[derive(Debug, Copy, Clone, Deserialize, Serialize, EnumDiscriminants, PartialEq, Eq, Display)]
 #[strum_discriminants(derive(strum::Display, Serialize, Deserialize))]

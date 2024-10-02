@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
-use si_events::ContentHash;
+use si_events::{ContentHash, OutputSocketId};
 use si_frontend_types as frontend_types;
+use si_id::AttributePrototypeArgumentId;
 use si_layer_cache::LayerDbError;
 use std::collections::HashMap;
 use std::sync::Arc;
 use telemetry::prelude::*;
 use thiserror::Error;
 
-use crate::attribute::prototype::argument::AttributePrototypeArgumentId;
 use crate::attribute::prototype::AttributePrototypeError;
 use crate::attribute::value::AttributeValueError;
 use crate::change_set::ChangeSetError;
@@ -18,12 +18,12 @@ use crate::workspace_snapshot::edge_weight::{EdgeWeightKind, EdgeWeightKindDiscr
 use crate::workspace_snapshot::node_weight::{ContentNodeWeight, NodeWeight, NodeWeightError};
 use crate::workspace_snapshot::WorkspaceSnapshotError;
 use crate::{
-    id, AttributePrototype, DalContext, FuncId, HelperError, InputSocket, SchemaVariant,
-    SchemaVariantError, Timestamp, TransactionsError,
-};
-use crate::{
     implement_add_edge_to, AttributePrototypeId, AttributeValue, AttributeValueId, ComponentId,
     InputSocketId, SchemaVariantId,
+};
+use crate::{
+    AttributePrototype, DalContext, FuncId, HelperError, InputSocket, SchemaVariant,
+    SchemaVariantError, Timestamp, TransactionsError,
 };
 
 use super::connection_annotation::{ConnectionAnnotation, ConnectionAnnotationError};
@@ -71,20 +71,6 @@ pub enum OutputSocketError {
 }
 
 pub type OutputSocketResult<T> = Result<T, OutputSocketError>;
-
-id!(OutputSocketId);
-
-impl From<si_events::OutputSocketId> for OutputSocketId {
-    fn from(value: si_events::OutputSocketId) -> Self {
-        Self(value.into_raw_id())
-    }
-}
-
-impl From<OutputSocketId> for si_events::OutputSocketId {
-    fn from(value: OutputSocketId) -> Self {
-        Self::from_raw_id(value.0)
-    }
-}
 
 /// This socket can only provide data to external [`SchemaVariants`](crate::SchemaVariant). It can
 /// only consume data within its own [`SchemaVariant`](crate::SchemaVariant).

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use si_events::ulid::Ulid;
-use si_events::ContentHash;
+use si_events::{ContentHash, ModuleId};
 use si_frontend_types as frontend_types;
 use si_layer_cache::LayerDbError;
 use telemetry::prelude::*;
@@ -25,7 +25,7 @@ use crate::workspace_snapshot::node_weight::traits::SiNodeWeight;
 use crate::workspace_snapshot::node_weight::{NodeWeight, NodeWeightError};
 use crate::workspace_snapshot::WorkspaceSnapshotError;
 use crate::{
-    id, ChangeSetError, DalContext, Func, FuncError, HistoryActor, Schema, SchemaError, SchemaId,
+    ChangeSetError, DalContext, Func, FuncError, HistoryActor, Schema, SchemaError, SchemaId,
     SchemaVariant, SchemaVariantError, SchemaVariantId, Timestamp, TransactionsError, User,
     UserError,
 };
@@ -64,8 +64,6 @@ pub enum ModuleError {
 }
 
 pub type ModuleResult<T> = Result<T, ModuleError>;
-
-id!(ModuleId);
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Module {

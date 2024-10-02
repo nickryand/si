@@ -15,6 +15,8 @@ use content_node_weight::ContentNodeWeight;
 use petgraph::Direction;
 use serde::{Deserialize, Serialize};
 use si_events::ulid::Ulid;
+use si_events::AttributePrototypeId;
+use si_id::AttributePrototypeArgumentId;
 use si_layer_cache::LayerDbError;
 use strum::{AsRefStr, Display, EnumDiscriminants};
 use telemetry::prelude::*;
@@ -33,10 +35,9 @@ use crate::workspace_snapshot::node_weight::{
 };
 use crate::workspace_snapshot::WorkspaceSnapshotError;
 use crate::{
-    attribute::prototype::argument::AttributePrototypeArgumentId, id, implement_add_edge_to,
-    AttributeValue, AttributeValueId, ComponentId, DalContext, FuncId, HelperError, InputSocketId,
-    OutputSocketId, PropId, SchemaVariant, SchemaVariantError, SchemaVariantId, Timestamp,
-    TransactionsError,
+    implement_add_edge_to, AttributeValue, AttributeValueId, ComponentId, DalContext, FuncId,
+    HelperError, InputSocketId, OutputSocketId, PropId, SchemaVariant, SchemaVariantError,
+    SchemaVariantId, Timestamp, TransactionsError,
 };
 use crate::{Func, FuncError};
 
@@ -100,14 +101,6 @@ pub enum AttributePrototypeEventualParent {
     SchemaVariantFromInputSocket(SchemaVariantId, InputSocketId),
     SchemaVariantFromOutputSocket(SchemaVariantId, OutputSocketId),
     SchemaVariantFromProp(SchemaVariantId, PropId),
-}
-
-id!(AttributePrototypeId);
-
-impl From<AttributePrototypeId> for si_events::AttributePrototypeId {
-    fn from(value: AttributePrototypeId) -> Self {
-        si_events::AttributePrototypeId::from_raw_id(value.into())
-    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]

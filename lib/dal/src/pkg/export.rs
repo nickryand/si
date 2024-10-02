@@ -1,6 +1,7 @@
 use std::collections::{hash_map::Entry, HashMap};
 use std::ops::Deref;
 
+use si_id::AttributePrototypeArgumentId;
 use strum::IntoEnumIterator;
 
 use si_pkg::{
@@ -14,9 +15,7 @@ use si_pkg::{
 use telemetry::prelude::*;
 
 use crate::action::prototype::ActionPrototype;
-use crate::attribute::prototype::argument::{
-    AttributePrototypeArgument, AttributePrototypeArgumentId,
-};
+use crate::attribute::prototype::argument::AttributePrototypeArgument;
 
 use crate::func::is_intrinsic;
 use crate::schema::variant::leaves::{LeafInputLocation, LeafKind};

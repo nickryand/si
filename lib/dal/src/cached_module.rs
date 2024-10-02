@@ -4,21 +4,19 @@ use chrono::{DateTime, Utc};
 use itertools::Itertools;
 use postgres_types::ToSql;
 use serde::{Deserialize, Serialize};
+use si_events::SchemaId;
 use telemetry::prelude::*;
 use thiserror::Error;
 use tokio::task::JoinSet;
 use ulid::Ulid;
 
 use crate::{
-    pk,
     slow_rt::{self, SlowRuntimeError},
-    ComponentType, DalContext, SchemaId, TransactionsError,
+    CachedModuleId, ComponentType, DalContext, TransactionsError,
 };
 use module_index_client::{ModuleDetailsResponse, ModuleIndexClient, ModuleIndexClientError};
 use si_data_pg::{PgError, PgRow};
 use si_pkg::{SiPkg, SiPkgError};
-
-pk!(CachedModuleId);
 
 #[remain::sorted]
 #[derive(Error, Debug)]

@@ -5,6 +5,8 @@ use inferred_connection_graph::InferredConnectionGraph;
 use itertools::Itertools;
 use petgraph::Direction::Outgoing;
 use serde::{Deserialize, Serialize};
+use si_events::ComponentId;
+use si_id::AttributePrototypeArgumentId;
 use si_pkg::KeyOrIndex;
 use socket::{ComponentInputSocket, ComponentOutputSocket};
 use std::collections::{hash_map, HashMap, HashSet, VecDeque};
@@ -22,7 +24,7 @@ use crate::action::{Action, ActionError, ActionState};
 use crate::actor_view::ActorView;
 use crate::attribute::prototype::argument::value_source::ValueSource;
 use crate::attribute::prototype::argument::{
-    AttributePrototypeArgument, AttributePrototypeArgumentError, AttributePrototypeArgumentId,
+    AttributePrototypeArgument, AttributePrototypeArgumentError,
 };
 use crate::attribute::prototype::{AttributePrototypeError, AttributePrototypeSource};
 use crate::attribute::value::{
@@ -60,7 +62,7 @@ use si_frontend_types::{
 };
 
 use crate::{
-    id, implement_add_edge_to, AttributePrototype, AttributeValue, AttributeValueId, ChangeSetId,
+    implement_add_edge_to, AttributePrototype, AttributeValue, AttributeValueId, ChangeSetId,
     DalContext, Func, FuncError, FuncId, HelperError, InputSocket, InputSocketId, OutputSocket,
     OutputSocketId, Prop, PropId, PropKind, Schema, SchemaVariant, SchemaVariantId,
     StandardModelError, Timestamp, TransactionsError, WorkspaceError, WorkspacePk, WsEvent,
@@ -224,20 +226,6 @@ pub enum ComponentError {
 }
 
 pub type ComponentResult<T> = Result<T, ComponentError>;
-
-id!(ComponentId);
-
-impl From<ComponentId> for si_events::ComponentId {
-    fn from(value: ComponentId) -> Self {
-        value.into_inner().into()
-    }
-}
-
-impl From<si_events::ComponentId> for ComponentId {
-    fn from(value: si_events::ComponentId) -> Self {
-        Self(value.into_raw_id())
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct IncomingConnection {

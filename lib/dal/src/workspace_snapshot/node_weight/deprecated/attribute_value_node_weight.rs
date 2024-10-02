@@ -1,13 +1,11 @@
 use serde::{Deserialize, Serialize};
 use si_events::{merkle_tree_hash::MerkleTreeHash, ulid::Ulid};
+use si_id::deprecated::FuncExecutionPk;
 
-use crate::{
-    func::FuncExecutionPk,
-    workspace_snapshot::{
-        content_address::ContentAddress,
-        graph::LineageId,
-        vector_clock::{deprecated::DeprecatedVectorClock, VectorClock},
-    },
+use crate::workspace_snapshot::{
+    content_address::ContentAddress,
+    graph::LineageId,
+    vector_clock::{deprecated::DeprecatedVectorClock, VectorClock},
 };
 
 #[derive(Clone, Serialize, Deserialize, Debug)]

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use si_events::ulid::Ulid;
-use si_events::{CasValue, ContentHash};
+use si_events::{CasValue, ContentHash, UserPk};
 use strum::EnumDiscriminants;
 use thiserror::Error;
 
@@ -12,7 +12,7 @@ use crate::{
     property_editor::schema::WidgetKind, socket::connection_annotation::ConnectionAnnotation,
     ActionPrototypeId, ComponentId, ComponentType, DalContext, FuncBackendKind,
     FuncBackendResponseType, FuncId, PropId, PropKind, SchemaVariant, SchemaVariantId, SocketArity,
-    SocketKind, Timestamp, UserPk,
+    SocketKind, Timestamp,
 };
 
 #[remain::sorted]

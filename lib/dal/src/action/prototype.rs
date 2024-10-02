@@ -3,6 +3,7 @@ use std::sync::Arc;
 use petgraph::{Direction::Incoming, Outgoing};
 use serde::{Deserialize, Serialize};
 use si_events::{ActionResultState, FuncRunId};
+use si_id::FuncId;
 use si_layer_cache::LayerDbError;
 use si_pkg::ActionFuncSpecKind;
 use strum::Display;
@@ -13,10 +14,7 @@ use crate::{
     action::ActionId,
     component::ComponentUpdatedPayload,
     diagram::DiagramError,
-    func::{
-        runner::{FuncRunner, FuncRunnerError},
-        FuncId,
-    },
+    func::runner::{FuncRunner, FuncRunnerError},
     implement_add_edge_to,
     workspace_snapshot::{
         content_address::ContentAddressDiscriminants,

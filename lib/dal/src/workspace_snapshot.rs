@@ -34,6 +34,7 @@ use graph::correct_transforms::correct_transforms;
 use graph::detect_updates::Update;
 use graph::{RebaseBatch, WorkspaceSnapshotGraph};
 use node_weight::traits::CorrectTransformsError;
+use si_id::ChangeSetId;
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
@@ -52,9 +53,10 @@ use tokio::task::JoinError;
 
 use crate::action::{Action, ActionError};
 use crate::attribute::prototype::argument::AttributePrototypeArgumentError;
-use crate::change_set::{ChangeSetError, ChangeSetId};
+use crate::change_set::ChangeSetError;
 use crate::component::inferred_connection_graph::InferredConnectionGraph;
 use crate::component::IncomingConnection;
+use crate::diagram::NodeId;
 use crate::slow_rt::{self, SlowRuntimeError};
 use crate::workspace_snapshot::content_address::ContentAddressDiscriminants;
 use crate::workspace_snapshot::edge_weight::{
@@ -64,17 +66,15 @@ use crate::workspace_snapshot::graph::{LineageId, WorkspaceSnapshotGraphDiscrimi
 use crate::workspace_snapshot::node_weight::category_node_weight::CategoryNodeKind;
 use crate::workspace_snapshot::node_weight::NodeWeight;
 use crate::{
-    id, AttributeValueId, Component, ComponentError, ComponentId, InputSocketId, OutputSocketId,
-    SchemaId, SchemaVariantId, TenancyError, Workspace, WorkspaceError,
-};
-use crate::{
     workspace_snapshot::{graph::WorkspaceSnapshotGraphError, node_weight::NodeWeightError},
     DalContext, TransactionsError, WorkspaceSnapshotGraphVCurrent,
 };
+use crate::{
+    AttributeValueId, Component, ComponentError, ComponentId, InputSocketId, OutputSocketId,
+    SchemaId, SchemaVariantId, TenancyError, Workspace, WorkspaceError,
+};
 
 use self::node_weight::{NodeWeightDiscriminants, OrderingNodeWeight};
-
-id!(NodeId);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct NodeInformation {

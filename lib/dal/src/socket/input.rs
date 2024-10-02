@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use si_events::ContentHash;
+use si_events::{ContentHash, InputSocketId};
 use si_frontend_types as frontend_types;
 use si_layer_cache::LayerDbError;
 use std::collections::HashMap;
@@ -23,7 +23,7 @@ use crate::workspace_snapshot::node_weight::{
 };
 use crate::workspace_snapshot::WorkspaceSnapshotError;
 use crate::{
-    id, implement_add_edge_to, AttributePrototype, AttributePrototypeId, AttributeValue,
+    implement_add_edge_to, AttributePrototype, AttributePrototypeId, AttributeValue,
     AttributeValueId, ComponentError, ComponentId, DalContext, FuncId, HelperError, SchemaVariant,
     SchemaVariantError, SchemaVariantId, Timestamp, TransactionsError,
 };
@@ -77,20 +77,6 @@ pub enum InputSocketError {
 }
 
 pub type InputSocketResult<T> = Result<T, InputSocketError>;
-
-id!(InputSocketId);
-
-impl From<si_events::InputSocketId> for InputSocketId {
-    fn from(value: si_events::InputSocketId) -> Self {
-        Self(value.into_raw_id())
-    }
-}
-
-impl From<InputSocketId> for si_events::InputSocketId {
-    fn from(value: InputSocketId) -> Self {
-        Self::from_raw_id(value.0)
-    }
-}
 
 /// This socket can only provide data within its own [`SchemaVariants`](crate::SchemaVariant). It
 /// can only consume data from external [`SchemaVariants`](crate::SchemaVariant).

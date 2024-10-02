@@ -1,9 +1,5 @@
 use serde::{Deserialize, Serialize};
-
-use crate::id;
-
-id!(WorkspacePk);
-id!(ChangeSetId);
+use si_id::{ChangeSetId, WorkspacePk};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Tenancy {

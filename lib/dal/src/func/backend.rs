@@ -4,6 +4,7 @@ use tokio::sync::mpsc;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use si_events::ChangeSetId;
 use si_events::FuncRunId;
+use si_events::WorkspaceId;
 use strum::{AsRefStr, Display, EnumIter, EnumString};
 use telemetry::prelude::*;
 use thiserror::Error;
@@ -13,7 +14,6 @@ use veritech_client::{
 };
 
 use crate::label_list::ToLabelList;
-use crate::workspace::WorkspaceId;
 use crate::{Func, FuncId, PropKind};
 
 pub mod array;

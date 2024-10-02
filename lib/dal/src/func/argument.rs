@@ -1,6 +1,7 @@
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
-use si_events::ContentHash;
+use si_events::{ContentHash, FuncArgumentId};
+use si_id::{AttributePrototypeArgumentId, FuncId};
 use si_pkg::FuncArgumentKind as PkgFuncArgumentKind;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -9,7 +10,7 @@ use telemetry::prelude::*;
 use thiserror::Error;
 
 use crate::attribute::prototype::argument::{
-    AttributePrototypeArgument, AttributePrototypeArgumentError, AttributePrototypeArgumentId,
+    AttributePrototypeArgument, AttributePrototypeArgumentError,
 };
 use crate::change_set::ChangeSetError;
 use crate::layer_db_types::{FuncArgumentContent, FuncArgumentContentV1};
@@ -20,8 +21,8 @@ use crate::workspace_snapshot::node_weight::{
 };
 use crate::workspace_snapshot::WorkspaceSnapshotError;
 use crate::{
-    id, DalContext, EdgeWeightKind, Func, FuncError, FuncId, HistoryEventError, PropKind,
-    StandardModelError, Timestamp, TransactionsError,
+    DalContext, EdgeWeightKind, Func, FuncError, HistoryEventError, PropKind, StandardModelError,
+    Timestamp, TransactionsError,
 };
 
 #[remain::sorted]
@@ -146,20 +147,6 @@ impl From<si_frontend_types::FuncArgumentKind> for FuncArgumentKind {
             si_frontend_types::FuncArgumentKind::Object => FuncArgumentKind::Object,
             si_frontend_types::FuncArgumentKind::String => FuncArgumentKind::String,
         }
-    }
-}
-
-id!(FuncArgumentId);
-
-impl From<si_events::FuncArgumentId> for FuncArgumentId {
-    fn from(value: si_events::FuncArgumentId) -> Self {
-        Self(value.into_raw_id())
-    }
-}
-
-impl From<FuncArgumentId> for si_events::FuncArgumentId {
-    fn from(value: FuncArgumentId) -> Self {
-        Self::from_raw_id(value.0)
     }
 }
 

@@ -6,6 +6,7 @@ use std::{
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use si_events::{ActionResultState, FuncRunId};
+use si_id::ActionId;
 use telemetry::prelude::*;
 use telemetry_utils::metric;
 use veritech_client::{ActionRunResultSuccess, ResourceStatus};
@@ -13,7 +14,7 @@ use veritech_client::{ActionRunResultSuccess, ResourceStatus};
 use crate::{
     action::{
         prototype::{ActionKind, ActionPrototype},
-        Action, ActionError, ActionId, ActionState,
+        Action, ActionError, ActionState,
     },
     billing_publish,
     change_status::ChangeStatus,

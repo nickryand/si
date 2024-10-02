@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use si_data_nats::NatsError;
 use si_data_pg::PgError;
+use si_events::ValidationOutputId;
 use si_layer_cache::LayerDbError;
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -19,7 +20,7 @@ use crate::workspace_snapshot::edge_weight::{
 use crate::workspace_snapshot::node_weight::{NodeWeight, NodeWeightError};
 use crate::workspace_snapshot::WorkspaceSnapshotError;
 use crate::{
-    id, schema::variant::SchemaVariantError, AttributeValue, AttributeValueId, ChangeSetError,
+    schema::variant::SchemaVariantError, AttributeValue, AttributeValueId, ChangeSetError,
     Component, ComponentId, FuncError, HistoryEventError, Prop, Timestamp,
 };
 use crate::{ComponentError, DalContext, TransactionsError};
@@ -71,8 +72,6 @@ pub enum ValidationError {
 }
 
 pub type ValidationResult<T> = Result<T, ValidationError>;
-
-id!(ValidationOutputId);
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum ValidationStatus {

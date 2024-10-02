@@ -14,6 +14,7 @@ use si_data_nats::{NatsClient, NatsError, NatsTxn};
 use si_data_pg::{InstrumentedClient, PgError, PgPool, PgPoolError, PgPoolResult, PgTxn};
 use si_events::rebase_batch_address::RebaseBatchAddress;
 use si_events::WorkspaceSnapshotAddress;
+use si_id::ChangeSetId;
 use si_layer_cache::activities::ActivityPayloadDiscriminants;
 use si_layer_cache::db::LayerDb;
 use si_layer_cache::LayerDbError;
@@ -32,8 +33,9 @@ use crate::layer_db_types::ContentTypes;
 use crate::slow_rt::SlowRuntimeError;
 use crate::workspace_snapshot::graph::{RebaseBatch, WorkspaceSnapshotGraph};
 use crate::workspace_snapshot::DependentValueRoot;
+use crate::WorkspacePk;
 use crate::{
-    change_set::{ChangeSet, ChangeSetId},
+    change_set::ChangeSet,
     job::{
         definition::ActionJob,
         processor::{JobQueueProcessor, JobQueueProcessorError},
@@ -41,7 +43,7 @@ use crate::{
         queue::JobQueue,
     },
     workspace_snapshot::WorkspaceSnapshotError,
-    AttributeValueId, HistoryActor, StandardModel, Tenancy, TenancyError, Visibility, WorkspacePk,
+    AttributeValueId, HistoryActor, StandardModel, Tenancy, TenancyError, Visibility,
     WorkspaceSnapshot,
 };
 use crate::{slow_rt, EncryptedSecret, Workspace, WorkspaceError};

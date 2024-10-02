@@ -1,7 +1,8 @@
+use thiserror::Error;
+
 use crate::{
     EdgeWeightKind, EdgeWeightKindDiscriminants, TransactionsError, WorkspaceSnapshotError,
 };
-use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum HelperError {

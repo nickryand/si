@@ -1,13 +1,14 @@
 use serde::{Deserialize, Serialize};
 use si_data_nats::NatsError;
 use si_data_pg::PgError;
+use si_id::UserPk;
 use telemetry::prelude::*;
 use thiserror::Error;
 use tokio::task::JoinError;
 
 use crate::ws_event::{WsEvent, WsEventResult, WsPayload};
 use crate::{
-    id, jwt_key::JwtKeyError, standard_model_accessor_ro, ChangeSetId, DalContext, HistoryEvent,
+    jwt_key::JwtKeyError, standard_model_accessor_ro, ChangeSetId, DalContext, HistoryEvent,
     HistoryEventError, JwtPublicSigningKey, Tenancy, Timestamp, TransactionsError, WorkspacePk,
 };
 
@@ -38,15 +39,6 @@ pub enum UserError {
 }
 
 pub type UserResult<T> = Result<T, UserError>;
-
-id!(UserPk);
-
-impl From<UserPk> for si_events::UserPk {
-    fn from(value: UserPk) -> Self {
-        let id: ulid::Ulid = value.into();
-        id.into()
-    }
-}
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct User {

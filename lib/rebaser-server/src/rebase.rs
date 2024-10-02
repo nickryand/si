@@ -136,7 +136,7 @@ pub async fn perform_rebase(
         });
     }
 
-    if updating_head && *workspace.pk() != WorkspacePk::NONE {
+    if updating_head && *workspace.pk() != si_id::nil() {
         let all_open_change_sets = ChangeSet::list_open(ctx).await?;
         for target_change_set in all_open_change_sets.into_iter().filter(|cs| {
             cs.id != workspace.default_change_set_id()

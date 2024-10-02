@@ -6,7 +6,10 @@ use std::time::Duration;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use si_data_pg::{PgError, PgRow};
+use si_events::ChangeSetId;
 use si_events::{ulid::Ulid, WorkspaceSnapshotAddress};
+use si_id::ActionId;
+use si_id::UserPk;
 use si_layer_cache::LayerDbError;
 use telemetry::prelude::*;
 use thiserror::Error;
@@ -16,10 +19,9 @@ use crate::billing_publish::BillingPublishError;
 use crate::slow_rt::SlowRuntimeError;
 use crate::workspace_snapshot::graph::RebaseBatch;
 use crate::{
-    action::{ActionError, ActionId},
-    id, ChangeSetStatus, ComponentError, DalContext, HistoryActor, HistoryEvent, HistoryEventError,
-    TransactionsError, User, UserError, UserPk, Workspace, WorkspacePk, WorkspaceSnapshot,
-    WorkspaceSnapshotError, WsEvent, WsEventError,
+    action::ActionError, ChangeSetStatus, ComponentError, DalContext, HistoryActor, HistoryEvent,
+    HistoryEventError, TransactionsError, User, UserError, Workspace, WorkspacePk,
+    WorkspaceSnapshot, WorkspaceSnapshotError, WsEvent, WsEventError,
 };
 use crate::{billing_publish, WorkspaceError};
 
@@ -133,21 +135,6 @@ pub enum ChangeSetApplyError {
 
 /// A superset of [`ChangeSetResult`] used when performing apply logic.
 pub type ChangeSetApplyResult<T> = Result<T, ChangeSetApplyError>;
-
-id!(ChangeSetId);
-
-impl From<ChangeSetId> for si_events::ChangeSetId {
-    fn from(value: ChangeSetId) -> Self {
-        let id: ulid::Ulid = value.into();
-        id.into()
-    }
-}
-
-impl From<si_events::ChangeSetId> for ChangeSetId {
-    fn from(value: si_events::ChangeSetId) -> Self {
-        Self(value.into_raw_id())
-    }
-}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ChangeSet {

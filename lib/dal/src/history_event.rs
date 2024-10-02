@@ -2,12 +2,14 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use si_data_nats::NatsError;
 use si_data_pg::PgError;
+use si_events::UserPk;
+use si_id::HistoryEventPk;
 use strum::Display as StrumDisplay;
 use telemetry::prelude::*;
 use thiserror::Error;
 
 use crate::actor_view::ActorView;
-use crate::{id, DalContext, Timestamp, User, UserPk};
+use crate::{DalContext, Timestamp, User};
 use crate::{Tenancy, TransactionsError};
 
 const SYSTEMINIT_EMAIL_SUFFIX: &str = "@systeminit.com";
@@ -70,8 +72,6 @@ impl From<UserPk> for HistoryActor {
         HistoryActor::User(pk)
     }
 }
-
-id!(HistoryEventPk);
 
 /// HistoryEvents are the audit trail for things in SI. They track
 /// that a specific actor did something, and optionally store data

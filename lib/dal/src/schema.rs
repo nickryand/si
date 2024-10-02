@@ -1,6 +1,6 @@
 use petgraph::Outgoing;
 use serde::{Deserialize, Serialize};
-use si_events::ContentHash;
+use si_events::{ContentHash, SchemaId};
 use si_layer_cache::LayerDbError;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
@@ -18,12 +18,13 @@ use crate::workspace_snapshot::edge_weight::{
 use crate::workspace_snapshot::node_weight::category_node_weight::CategoryNodeKind;
 use crate::workspace_snapshot::node_weight::{NodeWeight, NodeWeightError};
 use crate::workspace_snapshot::WorkspaceSnapshotError;
+use crate::SchemaVariantId;
 use crate::{
-    id, implement_add_edge_to, DalContext, Func, FuncError, FuncId, HelperError,
-    SchemaVariantError, Timestamp, TransactionsError,
+    implement_add_edge_to, DalContext, Func, FuncError, FuncId, HelperError, SchemaVariantError,
+    Timestamp, TransactionsError,
 };
 
-pub use variant::{SchemaVariant, SchemaVariantId};
+pub use variant::SchemaVariant;
 
 pub mod variant;
 pub mod view;
@@ -54,20 +55,6 @@ pub enum SchemaError {
 }
 
 pub type SchemaResult<T> = Result<T, SchemaError>;
-
-id!(SchemaId);
-
-impl From<si_events::SchemaId> for SchemaId {
-    fn from(value: si_events::SchemaId) -> Self {
-        Self(value.into_raw_id())
-    }
-}
-
-impl From<SchemaId> for si_events::SchemaId {
-    fn from(value: SchemaId) -> Self {
-        Self::from_raw_id(value.0)
-    }
-}
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Schema {

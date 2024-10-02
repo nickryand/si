@@ -31,6 +31,7 @@ use serde_json::Value;
 use si_crypto::{SymmetricCryptoError, SymmetricCryptoService, SymmetricNonce};
 use si_data_pg::PgError;
 use si_events::{ulid::Ulid, ContentHash, EncryptedSecretKey};
+use si_events::{SecretId, UserPk};
 use si_hash::Hash;
 use si_layer_cache::LayerDbError;
 use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
@@ -50,7 +51,6 @@ use crate::attribute::prototype::AttributePrototypeError;
 use crate::attribute::value::AttributeValueError;
 use crate::func::argument::{FuncArgument, FuncArgumentError};
 use crate::func::intrinsics::IntrinsicFunc;
-use crate::key_pair::KeyPairPk;
 use crate::layer_db_types::{SecretContent, SecretContentV1};
 use crate::prop::PropError;
 use crate::schema::variant::root_prop::RootPropChild;
@@ -61,11 +61,12 @@ use crate::workspace_snapshot::node_weight::category_node_weight::CategoryNodeKi
 use crate::workspace_snapshot::node_weight::secret_node_weight::SecretNodeWeight;
 use crate::workspace_snapshot::node_weight::{NodeWeight, NodeWeightError};
 use crate::workspace_snapshot::WorkspaceSnapshotError;
+use crate::KeyPairPk;
 use crate::{
-    id, implement_add_edge_to, AttributePrototype, AttributeValue, AttributeValueId,
-    ChangeSetError, ComponentError, ComponentId, DalContext, Func, FuncError, FuncId, HelperError,
-    HistoryActor, HistoryEventError, KeyPair, KeyPairError, Prop, SchemaVariant,
-    SchemaVariantError, StandardModelError, Timestamp, TransactionsError, UserPk,
+    implement_add_edge_to, AttributePrototype, AttributeValue, AttributeValueId, ChangeSetError,
+    ComponentError, ComponentId, DalContext, Func, FuncError, FuncId, HelperError, HistoryActor,
+    HistoryEventError, KeyPair, KeyPairError, Prop, SchemaVariant, SchemaVariantError,
+    StandardModelError, Timestamp, TransactionsError,
 };
 use si_events::encrypted_secret::EncryptedSecretKeyParseError;
 
@@ -147,8 +148,6 @@ pub enum SecretError {
 
 #[allow(missing_docs)]
 pub type SecretResult<T> = Result<T, SecretError>;
-
-id!(SecretId);
 
 /// A reference to an [`EncryptedSecret`] with metadata.
 ///

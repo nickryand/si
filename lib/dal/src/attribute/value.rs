@@ -1,43 +1,3 @@
-// FIXME(nick): restore this module comment with the new paradigm.
-// An [`AttributeValue`] represents which [`FuncBinding`](crate::func::binding::FuncBinding)
-// and [`FuncBindingReturnValue`] provide attribute's value. Moreover, it tracks whether the
-// value is proxied or not. Proxied values "point" to another [`AttributeValue`] to provide
-// the attribute's value.
-//
-// ## Updating [`AttributeValues`](AttributeValue)
-//
-// Let's say you want to update a
-// [`PropertyEditorValue`](crate::property_editor::values::PropertyEditorValue) in the UI or a
-// "field" on a [`Component`](crate::Component) in general. The key to doing so is the following
-// process:
-//
-// 1) Find the appropriate [`AttributeValue`] in a [`context`](crate::AttributeContext) that is
-//   either "exactly specific" to what you need or "less specific" than what you need (see the
-//   [`module`](crate::attribute::context) for more information)
-// 2) Find its parent, which almost all [`AttributeValues`](AttributeValue) should have if they are
-//   in the lineage of a [`RootProp`](crate::RootProp) (usually, the
-//   [`standard model accessor`](crate::standard_accessors) that contains the parent will suffice
-//   in finding the parent)
-// 3) Use [`AttributeValue::update_for_context()`] with the appropriate key and
-//   [`context`](crate::AttributeContext) while ensuring that if you reuse the key and/or
-//   [`context`](crate::AttributeContext) from the [`AttributeValue`](crate::AttributeValue)
-//   that you found, that it is _exactly_ what you need (i.e. if the key changes or the
-//   [`context`](crate::AttributeContext) is in a lesser specificity than what you need, you
-//   mutate them accordingly)
-//
-// Often, you may not have all the information necessary to find the [`AttributeValue`] that you
-// would like to update. Ideally, you would use one of the existing accessor methods off
-// [`AttributeValue`] with contextual information such as a [`PropId`](crate::Prop),
-// a [`ComponentId`](crate::Component)), a parent [`AttributeValue`], a key, etc.
-//
-// In situations where we do not have minimal information to find the _correct_ [`AttributeValue`]
-// from existing accessor queries, we can leveraging existing queries from other structs and write
-// new queries for those structs and specific use cases. For example, since most members of the
-// [`RootProp`](crate::RootProp) tree are stable across [`SchemaVariants`](crate::SchemaVariant),
-// we can use [`Component::root_prop_child_attribute_value_for_component()`](crate::Component::root_prop_child_attribute_value_for_component)
-// to find the [`AttributeValue`] whose [`context`](crate::AttributeContext) corresponds to a
-// direct child [`Prop`](crate::Prop) of the [`RootProp`](crate::RootProp).
-
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 
@@ -48,7 +8,8 @@ use petgraph::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use si_events::ulid::Ulid;
-use si_events::FuncRunValue;
+use si_events::{AttributeValueId, FuncRunValue};
+use si_id::{deprecated::FuncExecutionPk, AttributePrototypeArgumentId};
 use si_pkg::{AttributeValuePath, KeyOrIndex};
 use telemetry::prelude::*;
 use thiserror::Error;
@@ -62,7 +23,6 @@ use crate::component::socket::ComponentInputSocket;
 use crate::func::argument::{FuncArgument, FuncArgumentError};
 use crate::func::intrinsics::IntrinsicFunc;
 use crate::func::runner::{FuncRunner, FuncRunnerError};
-use crate::func::FuncExecutionPk;
 use crate::prop::PropError;
 use crate::socket::input::InputSocketError;
 use crate::socket::output::OutputSocketError;
@@ -74,7 +34,7 @@ use crate::workspace_snapshot::node_weight::{
 };
 use crate::workspace_snapshot::{serde_value_to_string_type, WorkspaceSnapshotError};
 use crate::{
-    id, implement_add_edge_to, AttributePrototype, AttributePrototypeId, Component, ComponentError,
+    implement_add_edge_to, AttributePrototype, AttributePrototypeId, Component, ComponentError,
     ComponentId, DalContext, Func, FuncError, FuncId, HelperError, InputSocket, InputSocketId,
     OutputSocket, OutputSocketId, Prop, PropId, PropKind, Secret, SecretError, TransactionsError,
 };
@@ -83,7 +43,6 @@ use super::prototype::argument::static_value::StaticArgumentValue;
 use super::prototype::argument::value_source::ValueSourceError;
 use super::prototype::argument::{
     value_source::ValueSource, AttributePrototypeArgument, AttributePrototypeArgumentError,
-    AttributePrototypeArgumentId,
 };
 
 pub use is_for::ValueIsFor;
@@ -216,14 +175,6 @@ pub enum AttributeValueError {
 }
 
 pub type AttributeValueResult<T> = Result<T, AttributeValueError>;
-
-id!(AttributeValueId);
-
-impl From<AttributeValueId> for si_events::AttributeValueId {
-    fn from(value: AttributeValueId) -> Self {
-        value.into_inner().into()
-    }
-}
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct AttributeValue {

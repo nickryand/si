@@ -1,17 +1,10 @@
 use chrono::{DateTime, Utc};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
+use si_id::{ActionId, ActionPrototypeId, AttributeValueId, ComponentId, FuncRunId};
 use strum::{AsRefStr, Display, EnumIter, EnumString};
 
-use crate::{id, Actor, ChangeSetId, ContentHash, Tenancy, WorkspacePk};
-
-id!(FuncRunId);
-id!(ComponentId);
-id!(AttributeValueId);
-id!(ActionId);
-id!(ActionPrototypeId);
-id!(AttributePrototypeId);
-id!(AttributePrototypeArgumentId);
+use crate::{Actor, ChangeSetId, ContentHash, Tenancy, WorkspacePk};
 
 #[derive(AsRefStr, Deserialize, Display, Serialize, Debug, Eq, PartialEq, Clone, Copy)]
 pub enum FuncRunState {

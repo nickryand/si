@@ -4,9 +4,10 @@ use base64::{engine::general_purpose, Engine};
 use binding::{FuncBinding, FuncBindingError};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use si_events::CasValue;
 use si_events::{ulid::Ulid, ContentHash};
+use si_events::{CasValue, FuncId};
 use si_frontend_types::FuncSummary;
+use si_id::FuncArgumentId;
 use std::collections::HashMap;
 use std::string::FromUtf8Error;
 use std::sync::Arc;
@@ -16,7 +17,6 @@ use thiserror::Error;
 use ulid::Ulid as CoreUlid;
 
 use crate::change_set::ChangeSetError;
-use crate::func::argument::FuncArgumentId;
 use crate::func::intrinsics::IntrinsicFunc;
 use crate::layer_db_types::{FuncContent, FuncContentV2};
 use crate::workspace_snapshot::edge_weight::{EdgeWeightKind, EdgeWeightKindDiscriminants};
@@ -25,7 +25,7 @@ use crate::workspace_snapshot::node_weight::category_node_weight::CategoryNodeKi
 use crate::workspace_snapshot::node_weight::{FuncNodeWeight, NodeWeight, NodeWeightError};
 use crate::workspace_snapshot::WorkspaceSnapshotError;
 use crate::{
-    id, implement_add_edge_to, ChangeSetId, DalContext, HelperError, Timestamp, TransactionsError,
+    implement_add_edge_to, ChangeSetId, DalContext, HelperError, Timestamp, TransactionsError,
     WsEvent, WsEventResult, WsPayload,
 };
 
@@ -116,23 +116,6 @@ pub struct FuncMetadataView {
 pub fn is_intrinsic(name: &str) -> bool {
     IntrinsicFunc::iter().any(|intrinsic| intrinsic.name() == name)
 }
-
-id!(FuncId);
-
-impl From<si_events::FuncId> for FuncId {
-    fn from(value: si_events::FuncId) -> Self {
-        Self(value.into_raw_id())
-    }
-}
-
-impl From<FuncId> for si_events::FuncId {
-    fn from(value: FuncId) -> Self {
-        Self::from_raw_id(value.0)
-    }
-}
-
-// NOTE: This is here only for backward compatibility
-id!(FuncExecutionPk);
 
 /// A `Func` is the declaration of the existence of a function. It has a name,
 /// and corresponds to a given function backend (and its associated return types).

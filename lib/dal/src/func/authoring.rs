@@ -30,6 +30,7 @@
 use base64::engine::general_purpose;
 use base64::Engine;
 use si_events::FuncRunId;
+use si_id::FuncArgumentId;
 use si_layer_cache::LayerDbError;
 use std::sync::Arc;
 use telemetry::prelude::*;
@@ -41,7 +42,7 @@ use crate::attribute::prototype::argument::{
 };
 use crate::attribute::prototype::AttributePrototypeError;
 use crate::attribute::value::AttributeValueError;
-use crate::func::argument::{FuncArgument, FuncArgumentError, FuncArgumentId, FuncArgumentKind};
+use crate::func::argument::{FuncArgument, FuncArgumentError, FuncArgumentKind};
 use crate::func::FuncKind;
 use crate::prop::PropError;
 use crate::schema::variant::authoring::{VariantAuthoringClient, VariantAuthoringError};

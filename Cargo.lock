@@ -1722,6 +1722,7 @@ dependencies = [
  "si-events",
  "si-frontend-types",
  "si-hash",
+ "si-id",
  "si-layer-cache",
  "si-pkg",
  "si-runtime",
@@ -5822,6 +5823,7 @@ dependencies = [
  "serde",
  "serde_json",
  "si-hash",
+ "si-id",
  "strum 0.26.3",
  "thiserror",
  "ulid",
@@ -5865,6 +5867,16 @@ dependencies = [
  "blake3",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "si-id"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "postgres-types",
+ "serde",
+ "ulid",
 ]
 
 [[package]]

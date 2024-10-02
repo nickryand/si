@@ -3,6 +3,7 @@
 //! to an entry of a immediate child [`map`](crate::PropKind::Map) underneath "/root".
 
 use serde::{Deserialize, Serialize};
+use si_id::FuncArgumentId;
 use strum::EnumIter;
 use telemetry::prelude::*;
 
@@ -14,7 +15,7 @@ use crate::{
 };
 use si_pkg::{LeafInputLocation as PkgLeafInputLocation, LeafKind as PkgLeafKind};
 
-use crate::func::argument::{FuncArgumentId, FuncArgumentKind};
+use crate::func::argument::FuncArgumentKind;
 use crate::prop::PropPath;
 use crate::schema::variant::root_prop::RootPropChild;
 

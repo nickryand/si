@@ -1,4 +1,5 @@
 use serde_json;
+use si_id::AttributePrototypeArgumentId;
 use std::collections::VecDeque;
 use std::sync::Arc;
 use ulid::Ulid;
@@ -21,12 +22,12 @@ use veritech_client::{
 
 use crate::attribute::prototype::argument::value_source::ValueSource;
 use crate::attribute::prototype::argument::{
-    AttributePrototypeArgument, AttributePrototypeArgumentError, AttributePrototypeArgumentId,
+    AttributePrototypeArgument, AttributePrototypeArgumentError,
 };
 use crate::component::socket::ComponentInputSocket;
 use crate::prop::PropError;
 use crate::schema::variant::root_prop::RootPropChild;
-use crate::workspace::WorkspaceId;
+use crate::WorkspaceId;
 use crate::{
     action::{
         prototype::{ActionPrototype, ActionPrototypeError},
