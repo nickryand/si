@@ -30,19 +30,19 @@ export interface InstalledPkgAssetView {
 
 export type DetachedAttributePrototypeKind =
   | {
-      type: "OutputSocketSocket";
-      data: {
-        name: string;
-        kind: "ConfigurationInput" | "ConfigurationOutput";
-      };
-    }
+    type: "OutputSocketSocket";
+    data: {
+      name: string;
+      kind: "ConfigurationInput" | "ConfigurationOutput";
+    };
+  }
   | {
-      type: "InputSocketSocket";
-      data: {
-        name: string;
-        kind: "ConfigurationInput" | "ConfigurationOutput";
-      };
-    }
+    type: "InputSocketSocket";
+    data: {
+      name: string;
+      kind: "ConfigurationInput" | "ConfigurationOutput";
+    };
+  }
   | { type: "InputSocketProp"; data: { path: string; kind: PropKind } }
   | { type: "Prop"; data: { path: string; kind: PropKind } };
 
@@ -563,6 +563,25 @@ export const useAssetStore = (forceChangeSetId?: ChangeSetId) => {
               if (deletedVariantIdx !== -1)
                 this.variantList.splice(deletedVariantIdx, 1, variant);
             },
+          });
+        },
+
+        async GENERATE_AWS_ASSET_SCHEMA(id: SchemaVariantId, command: string, subcommand: string) {
+          if (changeSetStore.creatingChangeSet)
+            throw new Error("race, wait until the change set is created");
+          if (changeSetStore.headSelected)
+            changeSetStore.creatingChangeSet = true;
+
+          return new ApiRequest<SchemaVariant>({
+            url: API_PREFIX.concat([id, "generate_aws_asset_schema"]),
+            params: { command, subcommand },
+            keyRequestStatusBy: id,
+            // onSuccess: () => {
+            //   if (code) {
+            //     const f = funcStore.funcCodeById[schemaVariant.assetFuncId];
+            //     if (f) f.code = code;
+            //   }
+            // }
           });
         },
       },

@@ -198,6 +198,8 @@ import Func from "./custom-icons/func.svg?raw";
 import FrameUp from "./custom-icons/frameup.svg?raw";
 import FrameDown from "./custom-icons/framedown.svg?raw";
 
+import Sparkles from "~icons/heroicons/sparkles-solid";
+
 // restricting the type here (Record<string, FunctionalComponent>) kills our IconName type below
 /* eslint sort-keys: "error" */
 export const ICONS = Object.freeze({
@@ -325,6 +327,7 @@ export const ICONS = Object.freeze({
   "sliders-vertical": SlidersVertical,
   socket: Socket,
   spacebar: MaterialSymbolsSpaceBarRounded,
+  sparkles: Sparkles,
   star: Star,
   starOutline: StarOutline,
   sun: Sun,
@@ -389,8 +392,7 @@ type RegularIconNames = keyof typeof ICONS;
 type LogoIconNames = keyof typeof LOGO_ICONS;
 type IconNameAliases = keyof typeof ICON_NAME_ALIASES;
 type SpinnableRawIconNames = keyof typeof SPINNABLE_ICONS;
-type SpinnableIconNames = `${SpinnableRawIconNames}--${
-  | "left"
+type SpinnableIconNames = `${SpinnableRawIconNames}--${| "left"
   | "right"
   | "up"
   | "down"}`;

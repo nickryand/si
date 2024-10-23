@@ -46,6 +46,7 @@
       class="flex-none"
       :color="selectedAsset.color"
     />
+    <AiButton v-if="featureFlagsStore.AI_GENERATOR && selectedAsset && !selectedFunc" :selectedAsset="selectedAsset" />
   </div>
 </template>
 
@@ -62,8 +63,11 @@ import { SchemaVariant } from "@/api/sdf/dal/schema";
 import { FuncSummary } from "@/api/sdf/dal/func";
 import EditingPill from "./EditingPill.vue";
 import NodeSkeleton from "./NodeSkeleton.vue";
+import AiButton from "./AiButton.vue";
+import { useFeatureFlagsStore } from "@/store/feature_flags.store";
 
 const assetStore = useAssetStore();
+const featureFlagsStore = useFeatureFlagsStore();
 
 const truncateRef1 = ref<InstanceType<typeof TruncateWithTooltip>>();
 const truncateRef2 = ref<InstanceType<typeof TruncateWithTooltip>>();

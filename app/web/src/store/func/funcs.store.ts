@@ -207,7 +207,7 @@ export const useFuncStore = () => {
         managementFunctionsForSelectedComponent(state) {
           const variant =
             useAssetStore().variantFromListById[
-              componentsStore.selectedComponent?.def.schemaVariantId || ""
+            componentsStore.selectedComponent?.def.schemaVariantId || ""
             ];
           if (!variant) return [];
           const mgmtFuncs: MgmtPrototype[] = [];
@@ -232,7 +232,7 @@ export const useFuncStore = () => {
         actionBindingsForSelectedComponent(): BindingWithDisplayName[] {
           const variant =
             useAssetStore().variantFromListById[
-              componentsStore.selectedComponent?.def.schemaVariantId || ""
+            componentsStore.selectedComponent?.def.schemaVariantId || ""
             ];
           if (!variant) return [];
           const summaries: Record<FuncId, FuncSummary> = {};
@@ -400,7 +400,7 @@ export const useFuncStore = () => {
               clientUlid: this.clientUlid,
             },
             optimistic: () => {
-              if (isHead) return () => {};
+              if (isHead) return () => { };
 
               const current = _.cloneDeep(this.funcsById[func.funcId]);
               const editing = this.funcsById[func.funcId];
@@ -450,7 +450,7 @@ export const useFuncStore = () => {
                           if (
                             b.attributePrototypeId &&
                             b.attributePrototypeId ===
-                              binding.attributePrototypeId
+                            binding.attributePrototypeId
                           )
                             return true;
                         }
@@ -467,7 +467,7 @@ export const useFuncStore = () => {
                           if (
                             b.managementPrototypeId &&
                             b.managementPrototypeId ===
-                              binding.managementPrototypeId
+                            binding.managementPrototypeId
                           )
                             return true;
                         }
@@ -829,7 +829,7 @@ export const useFuncStore = () => {
                 if (data.funcId === this.selectedFuncId) {
                   if (
                     typeof this.funcCodeById[this.selectedFuncId] ===
-                      "undefined" ||
+                    "undefined" ||
                     changeSetsStore.headSelected
                   ) {
                     this.FETCH_CODE(this.selectedFuncId);
