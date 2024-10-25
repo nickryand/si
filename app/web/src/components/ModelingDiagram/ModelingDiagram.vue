@@ -295,6 +295,7 @@ import { useAssetStore } from "@/store/asset.store";
 import { ComponentType } from "@/api/sdf/dal/schema";
 import { useStatusStore } from "@/store/status.store";
 import { useQualificationsStore } from "@/store/qualifications.store";
+import { nonNullable } from "@/utils/typescriptLinter";
 import DiagramGridBackground from "./DiagramGridBackground.vue";
 import {
   DiagramDrawEdgeState,
@@ -1419,35 +1420,78 @@ const currentSelectionMovableElements = computed(() => {
     (el) => el && "position" in el.def,
   ) as unknown as (DiagramNodeData | DiagramGroupData)[];
 
-  // filter out children of other selected items, since moving a parent will already move the child
-  const filteredElements = _.reject(elements, (el) => {
-    const ancestors = el.def.ancestorIds;
-    if (ancestors) {
-      const parentKeys = ancestors.map(getDiagramElementKeyForComponentId);
-      return _.intersection(currentSelectionKeys.value, parentKeys).length > 0;
-    } else return false;
-  });
-
   // cannot move elements that are actually gone already
-  return filteredElements.filter((e) => {
+  return elements.filter((e) => {
     if (e.def.changeStatus === "deleted") return false;
     return true;
   });
 });
+
+const findChildrenByBoundingBox = (
+  movingComponents: (DiagramNodeData | DiagramGroupData)[],
+  el: DiagramNodeData | DiagramGroupData,
+): (DiagramNodeData | DiagramGroupData)[] => {
+  const cRect = el.def.isGroup
+    ? viewStore.groups[el.def.id]
+    : viewStore.components[el.def.id];
+  if (!cRect) return [];
+
+  const componentIds: Set<ComponentId> = new Set();
+  const movingIds = movingComponents.map((c) => c.def.id);
+  const nonMovingComponentIds = Object.keys(viewStore.groups)
+    .concat(Object.keys(viewStore.components))
+    .filter((c) => !movingIds.includes(c));
+  const nonMovingComponents: Record<ComponentId, IRect> = {};
+  nonMovingComponentIds.forEach((id) => {
+    const c = viewStore.components[id];
+    if (c) nonMovingComponents[id] = c;
+    const g = viewStore.groups[id];
+    if (g) nonMovingComponents[id] = g;
+  });
+  const rect = { ...cRect }; // break obj by reference to the store, because we are modifying
+  // i dont exactly understand these numbers yet, but testing shows they are correct
+  rect.x -= rect.width / 3;
+  rect.x -= GROUP_INTERNAL_PADDING;
+  rect.y -= GROUP_INTERNAL_PADDING;
+  rect.width += GROUP_INTERNAL_PADDING * 2;
+  rect.height += GROUP_INTERNAL_PADDING;
+  for (const [id, elRect] of Object.entries(nonMovingComponents)) {
+    if (rectContainsAnother(rect, elRect)) {
+      componentIds.add(id);
+    }
+  }
+
+  return [...componentIds]
+    .map((id) => componentsStore.allComponentsById[id])
+    .filter(nonNullable);
+};
 
 const draggedElementsPositionsPreDrag = ref<
   Record<DiagramElementUniqueKey, Vector2d | undefined>
 >({});
 const edgeScrolledDuringDrag = ref<Vector2d>({ x: 0, y: 0 });
 
+const draggedChildren = ref<(DiagramNodeData | DiagramGroupData)[]>([]);
 function beginDragElements() {
   if (!lastMouseDownElement.value) return;
   dragElementsActive.value = true;
 
   edgeScrolledDuringDrag.value = { x: 0, y: 0 };
 
-  draggedElementsPositionsPreDrag.value =
-    currentSelectionMovableElements.value.reduce((obj, el) => {
+  const children: Set<DiagramNodeData | DiagramGroupData> = new Set();
+  currentSelectionMovableElements.value.forEach((el) => {
+    const childs = findChildrenByBoundingBox(
+      currentSelectionMovableElements.value,
+      el,
+    );
+    childs.forEach((c) => children.add(c));
+  });
+  draggedChildren.value = [...children];
+
+  // starting position of all children and dragging elements
+  draggedElementsPositionsPreDrag.value = currentSelectionMovableElements.value
+    .concat(draggedChildren.value)
+    .reduce((obj, el) => {
       const geo = el.def.isGroup
         ? viewStore.groups[el.def.id]
         : viewStore.components[el.def.id];
@@ -1544,7 +1588,7 @@ function onDragElementsMove() {
 
   viewStore.MOVE_COMPONENTS(
     diagramUlid,
-    currentSelectionMovableElements.value,
+    currentSelectionMovableElements.value.concat(draggedChildren.value),
     deltaFromLast,
     { broadcastToClients: true },
   );
@@ -1555,13 +1599,17 @@ function onDragElementsMove() {
 function endDragElements() {
   dragElementsActive.value = false;
   prevDragTotal.value = { x: 0, y: 0 };
+  const movedComponents = [
+    ...currentSelectionMovableElements.value.concat(draggedChildren.value),
+  ];
 
   viewStore.MOVE_COMPONENTS(
     diagramUlid,
-    currentSelectionMovableElements.value,
+    movedComponents,
     { x: 0, y: 0 },
     { writeToChangeSet: true },
   );
+  draggedChildren.value = [];
 }
 
 let dragToEdgeScrollInterval: ReturnType<typeof setInterval> | undefined;

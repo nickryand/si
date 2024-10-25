@@ -284,20 +284,19 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
           positionDelta: Vector2d,
           opts: { writeToChangeSet?: boolean; broadcastToClients?: boolean },
         ) {
-          if (positionDelta.x !== 0 || positionDelta.y !== 0)
+          if (positionDelta.x !== 0 || positionDelta.y !== 0) {
             components.forEach((c) => {
-              let orig;
-              if (c.def.isGroup) orig = this.groups[c.def.id];
-              else orig = this.components[c.def.id];
+              const orig = c.def.isGroup
+                ? this.groups[c.def.id]
+                : this.components[c.def.id];
               if (!orig) return;
 
               const newPos = vectorAdd({ ...orig }, positionDelta);
               orig.x = newPos.x;
               orig.y = newPos.y;
-
-              // find all sockets and adjust
-              // find all children by bounding box, not parentage, and adjust
+              // TODO find all sockets and adjust
             });
+          }
           // TODO, save, broadcast
         },
         async RESIZE_COMPONENT(
