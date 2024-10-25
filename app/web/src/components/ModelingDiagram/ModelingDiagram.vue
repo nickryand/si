@@ -1489,7 +1489,8 @@ function onDragElementsMove() {
   ] as DiagramGroupData;
 
   const adjust: Vector2d = { x: 0, y: 0 };
-  if (parentOrCandidate) {
+  // KNOWN TO BE NOT WORKING, MOVING ON
+  /* if (parentOrCandidate) {
     currentSelectionMovableElements.value.forEach((el) => {
       if (!draggedElementsPositionsPreDrag.value?.[el.uniqueKey]) return;
       const newPosition = vectorAdd(
@@ -1499,8 +1500,10 @@ function onDragElementsMove() {
 
       // if we are going to move the element within a new parent we may need to adjust
       // the position to stay inside of it
-      const parentRect = nodesLocationInfo[parentOrCandidate.uniqueKey];
-      const elRect = nodesLocationInfo[el.uniqueKey];
+      const parentRect = viewStore.groups[parentOrCandidate.def.id];
+      const elRect = el.def.isGroup
+        ? viewStore.groups[el.def.id]
+        : viewStore.components[el.def.id];
       if (!parentRect || !elRect) return;
       const movedElRect = {
         x: newPosition.x - elRect.width / 2,
@@ -1530,7 +1533,7 @@ function onDragElementsMove() {
           Math.abs(_adjust.y) > Math.abs(adjust.y) ? _adjust.y : adjust.y;
       }
     });
-  }
+  } */
 
   const result = vectorAdd(delta, adjust);
   // when we update the stores, we don't want to use the max delta
@@ -1709,7 +1712,7 @@ const cursorWithinGroupKey = computed(() => {
     // skip groups that are selected
     if (currentSelectionKeys.value.includes(group.uniqueKey)) return false;
 
-    const frameRect = nodesLocationInfo[group.uniqueKey];
+    const frameRect = viewStore.groups[group.def.id];
     if (!frameRect) return false;
     return rectContainsPoint(frameRect, gridPointerPos.value!);
   });
@@ -2216,6 +2219,8 @@ const pasteElementsActive = computed(() => {
   );
 });
 
+// TODO: I dont think we need to compute this
+// we can do the work directly in the paste function
 const currentSelectionEnclosure: Ref<IRect | undefined> = computed(() => {
   const componentIds = componentsStore.selectedComponentIds;
 
