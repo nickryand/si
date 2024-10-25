@@ -2631,10 +2631,14 @@ const selectionRects = computed(() => {
   currentSelectionKeys.value.forEach((uniqueKey) => {
     const isGroup = uniqueKey.startsWith("g-");
     const id = uniqueKey.slice(2); // remove the prefix
-    const rect = viewStore.components[id] || viewStore.components[id];
+    const rect = viewStore.components[id] || viewStore.groups[id];
     if (rect) {
-      const r = structuredClone(toRaw(rect));
-      r.x -= r.width / 2;
+      const r = {
+        x: rect.x - rect.width / 2,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+      };
       if (isGroup) {
         // deal with top bar height outside the component's
         // designated height
