@@ -115,7 +115,7 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
         contentBoundingBoxesByGroupId(state): Record<ComponentId, IRect> {
           const boxDictionary: Record<string, IRect> = {};
           const groups = Object.keys(state.groups)
-            .map((c) => componentsStore.groupsById[c.substring(2)])
+            .map((c) => componentsStore.groupsById[c])
             .filter((c): c is DiagramGroupData => !!c);
 
           for (const group of groups) {
