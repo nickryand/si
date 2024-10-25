@@ -1362,14 +1362,27 @@ function beginDragSelect() {
 
 function onDragSelectMove() {
   dragSelectEndPos.value = gridPointerPos.value;
+}
+
+function endDragSelect(doSelection = true) {
+  dragSelectActive.value = false;
 
   const selectedInBoxKeys: DiagramElementUniqueKey[] = [];
-  _.each(nodesLocationInfo, (nodeRect, nodeKey) => {
+  _.each(viewStore.groups, (nodeRect, nodeKey) => {
     const inSelectionBox = checkRectanglesOverlap(
       pointsToRect(dragSelectStartPos.value!, dragSelectEndPos.value!),
       nodeRect,
     );
-    if (inSelectionBox) selectedInBoxKeys.push(nodeKey);
+    if (inSelectionBox)
+      selectedInBoxKeys.push(DiagramGroupData.generateUniqueKey(nodeKey));
+  });
+  _.each(viewStore.components, (nodeRect, nodeKey) => {
+    const inSelectionBox = checkRectanglesOverlap(
+      pointsToRect(dragSelectStartPos.value!, dragSelectEndPos.value!),
+      nodeRect,
+    );
+    if (inSelectionBox)
+      selectedInBoxKeys.push(DiagramNodeData.generateUniqueKey(nodeKey));
   });
   // if holding shift key, we'll add/toggle the existing selection with what's in the box
   // NOTE - weird edge cases around what if you let go of shift after beginning the drag which we are ignoring
@@ -1402,10 +1415,7 @@ function onDragSelectMove() {
       );
     }
   }
-}
 
-function endDragSelect(doSelection = true) {
-  dragSelectActive.value = false;
   if (doSelection) setSelectionByKey(dragSelectPreviewKeys.value);
 }
 
