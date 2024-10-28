@@ -20,6 +20,7 @@ import { ComponentId, RawComponent, RawEdge } from "@/api/sdf/dal/component";
 import {
   GROUP_BOTTOM_INTERNAL_PADDING,
   GROUP_INTERNAL_PADDING,
+  SOCKET_SIZE,
 } from "@/components/ModelingDiagram/diagram_constants";
 import { vectorAdd } from "@/components/ModelingDiagram/utils/math";
 import handleStoreError from "./errors";
@@ -61,6 +62,40 @@ class UniqueStack<T> {
     for (const i of this.items.reverse()) yield i;
   }
 }
+
+const setSockets = (component: DiagramGroupData | DiagramNodeData) => {
+  const sockets: Sockets = {};
+  const width =
+    "width" in component ? component.width : component.def.size?.width;
+  if (!width) return sockets;
+
+  const left = component.layoutLeftSockets(width);
+  left.sockets.forEach((s) => {
+    const center = {
+      x: component.def.position.x + left.x + s.position.x - SOCKET_SIZE,
+      y: component.def.position.y + left.y + s.position.y,
+    };
+    sockets[s.uniqueKey] = {
+      center,
+    };
+  });
+  const right = component.layoutRightSockets(width);
+  right.sockets.forEach((s) => {
+    const center = {
+      x:
+        component.def.position.x +
+        // right.x + // this is actually 0, because its RTL
+        width -
+        SOCKET_SIZE + // so we add the full width, minus the size of the socket, b/c later code adds half the size of the socket
+        s.position.x,
+      y: component.def.position.y + right.y + s.position.y,
+    };
+    sockets[s.uniqueKey] = {
+      center,
+    };
+  });
+  return sockets;
+};
 
 /**
  * In general we treat the front end POSITION data as truth
@@ -190,8 +225,8 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
             this.groups = view.groups;
             // currently edges store their socket location information
             // internally... maybe we should stop that
-            this.edges = view.edges;
-            this.edgeIds = new Set(Object.keys(view.edges));
+            // this.edges = view.edges;
+            // this.edgeIds = new Set(Object.keys(view.edges));
             // derive the socket position from the component position
             // to begin, and then adjust it via delta when things move
             this.sockets = view.sockets;
@@ -255,21 +290,28 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
         ) {
           const components: Components = {};
           const groups: Groups = {};
+          const sockets: Sockets = {};
           for (const component of response.components) {
             const geo = { ...component.def.position } as IRect;
             geo.width = component.width;
             geo.height = component.height;
             components[component.def.id] = geo;
+            for (const [key, loc] of Object.entries(setSockets(component))) {
+              sockets[key] = loc;
+            }
           }
           for (const group of response.groups) {
+            if (!group.def.size) continue;
             groups[group.def.id] = {
               ...group.def.position,
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              ...group.def.size!,
+              ...group.def.size,
             };
+            for (const [key, loc] of Object.entries(setSockets(group))) {
+              sockets[key] = loc;
+            }
           }
           // TODO
-          this.viewsById[viewId] = { components, groups };
+          this.viewsById[viewId] = { components, groups, sockets };
         },
         /**
          * @param clientUlid whoami

@@ -38,7 +38,7 @@ export abstract class DiagramElementData {
   abstract get uniqueKey(): DiagramElementUniqueKey;
 }
 
-interface DiagramSocketDataWithPosition extends DiagramSocketData {
+export interface DiagramSocketDataWithPosition extends DiagramSocketData {
   position: Vector2d;
 }
 abstract class DiagramNodeHasSockets extends DiagramElementData {

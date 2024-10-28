@@ -91,7 +91,6 @@ overflow hidden */
                 renameOnDiagram(group, f);
               }
             "
-            @resize="onNodeLayoutOrLocationChange(group)"
           />
           <template v-for="node of nodes" :key="node.uniqueKey">
             <DiagramNode
@@ -111,7 +110,6 @@ overflow hidden */
                   renameOnDiagram(node, f);
                 }
               "
-              @resize="onNodeLayoutOrLocationChange(node)"
             />
           </template>
           <DiagramCursor
@@ -132,7 +130,6 @@ overflow hidden */
             v-for="group in groups"
             :key="group.uniqueKey"
             :group="group"
-            @resize="onNodeLayoutOrLocationChange(group)"
           />
 
           <!-- placeholders for new inserted elements still processing -->
@@ -264,7 +261,6 @@ import {
   Ref,
   provide,
   inject,
-  toRaw,
 } from "vue";
 import { Stage as KonvaStage } from "konva/lib/Stage";
 import Konva from "konva";
@@ -311,7 +307,6 @@ import {
   SideAndCornerIdentifiers,
   ElementHoverMeta,
   MoveElementsState,
-  SocketLocationInfo,
 } from "./diagram_types";
 import DiagramNode from "./DiagramNode.vue";
 import DiagramCursor from "./DiagramCursor.vue";
@@ -2220,7 +2215,7 @@ function onDrawEdgeMove() {
   const socketPointerDistances = _.map(
     drawEdgePossibleTargetSocketKeys.value,
     (socketKey) => {
-      const socketLocation = socketsLocationInfo[socketKey];
+      const socketLocation = viewStore.sockets[socketKey];
       // Not sure what this should do if we can't find a location
       const center = socketLocation?.center ?? { x: 0, y: 0 };
       return {
@@ -2551,7 +2546,6 @@ async function triggerInsertElement() {
 
 // LAYOUT REGISTRY + HELPERS ///////////////////////////////////////////////////////////
 const nodesLocationInfo = reactive<Record<string, IRect>>({});
-const socketsLocationInfo = reactive<Record<string, SocketLocationInfo>>({});
 
 type DIRECTION = "to" | "from";
 function getSocketLocationInfo(
@@ -2562,35 +2556,11 @@ function getSocketLocationInfo(
   if (edge) {
     // if from component is collapsed, return the position of its center
     const key = direction === "from" ? edge.fromSocketKey : edge.toSocketKey;
-    return socketsLocationInfo[key];
+    return viewStore.sockets[key];
   }
 
   if (!socketKey) return undefined;
-  return socketsLocationInfo[socketKey];
-}
-
-// PSA: this is the perf bottleneck for dragging
-function onNodeLayoutOrLocationChange(el: DiagramNodeData | DiagramGroupData) {
-  // record node location/dimensions (used when drawing selection box)
-  // we find the background shape, because the parent group has no dimensions
-  const nodeBgShape = kStage.findOne(`#${el.uniqueKey}--bg`);
-  nodesLocationInfo[el.uniqueKey] = {
-    ...nodeBgShape.getAbsolutePosition(kStage),
-    width: nodeBgShape.width(),
-    height: nodeBgShape.height(),
-  };
-
-  if ("sockets" in el) {
-    // record new socket locations (used to render edges)
-    el.sockets?.forEach((socket) => {
-      const socketShape = kStage.findOne(`#${socket.uniqueKey}`);
-      // This ensures that the diagram won't try to create edges to/from hidden sockets
-      if (!socketShape) return;
-      socketsLocationInfo[socket.uniqueKey] = {
-        center: socketShape.getAbsolutePosition(kStage),
-      };
-    });
-  }
+  return viewStore.sockets[socketKey];
 }
 
 // DIAGRAM CONTENTS HELPERS //////////////////////////////////////////////////
@@ -2649,31 +2619,11 @@ type ToFrom = { to: Vector2d; from: Vector2d };
 // This is also a drag bottleneck
 const edges = computed(() => {
   const points: ToFrom[] = [];
-  return Object.values(componentsStore.diagramEdgesById)
-    .map((e) => {
-      e.fromPoint = getSocketLocationInfo("from", e);
-      e.toPoint = getSocketLocationInfo("to", e);
-      return e;
-    })
-    .filter((edge) => {
-      if (!edge.toPoint || !edge.fromPoint) return false;
-      const tf = { to: edge.toPoint.center, from: edge.fromPoint.center };
-      // filter out duplicate edges from collapsed items that connect the same two coordinates
-      if (
-        points.some(
-          (_tf) =>
-            _tf.to.x === tf.to.x &&
-            _tf.to.y === tf.to.y &&
-            _tf.from.x === tf.from.x &&
-            _tf.from.y === tf.from.y,
-        )
-      )
-        return false;
-      else {
-        points.push(tf);
-        return true;
-      }
-    });
+  return Object.values(componentsStore.diagramEdgesById).map((e) => {
+    e.fromPoint = getSocketLocationInfo("from", e);
+    e.toPoint = getSocketLocationInfo("to", e);
+    return e;
+  });
 });
 
 // this will re-compute on every drag until all the position data is removed
