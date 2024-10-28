@@ -118,7 +118,7 @@ overflow hidden */
             :cursor="mouseCursor"
           />
           <DiagramEdge
-            v-for="edge in edges"
+            v-for="edge in viewStore.edges"
             :key="edge.uniqueKey"
             :edge="edge"
             :fromPoint="getSocketLocationInfo('from', edge)?.center"
@@ -1118,7 +1118,7 @@ const hoveredElement = computed(() => {
   if (!elm) {
     // putting this last, using a find
     const id = hoveredElementKey.value?.substring(2);
-    elm = edges.value.find((edge) => edge.def.id === id);
+    elm = viewStore.edges.find((edge) => edge.def.id === id);
   }
   return elm;
 });
@@ -2614,22 +2614,10 @@ const sockets = computed(() => {
   return _.compact(_.flatMap(elements, (i) => i.sockets));
 });
 
-type ToFrom = { to: Vector2d; from: Vector2d };
-// TODO move this to the store
-// This is also a drag bottleneck
-const edges = computed(() => {
-  const points: ToFrom[] = [];
-  return Object.values(componentsStore.diagramEdgesById).map((e) => {
-    e.fromPoint = getSocketLocationInfo("from", e);
-    e.toPoint = getSocketLocationInfo("to", e);
-    return e;
-  });
-});
-
 // this will re-compute on every drag until all the position data is removed
 const allElementsByKey = computed(() =>
   _.keyBy(
-    [...nodes.value, ...groups.value, ...sockets.value, ...edges.value],
+    [...nodes.value, ...groups.value, ...sockets.value, ...viewStore.edges],
     (e) => e.uniqueKey,
   ),
 );

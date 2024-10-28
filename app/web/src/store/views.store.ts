@@ -3,16 +3,8 @@ import { addStoreHooks, ApiRequest } from "@si/vue-lib/pinia";
 import { IRect, Vector2d } from "konva/lib/types";
 import { toRaw } from "vue";
 import { ChangeSetId } from "@/api/sdf/dal/change_set";
+import { ViewId, View, Components, Sockets, Groups } from "@/api/sdf/dal/views";
 import {
-  ViewId,
-  View,
-  Components,
-  Sockets,
-  Edges,
-  Groups,
-} from "@/api/sdf/dal/views";
-import {
-  DiagramElementUniqueKey,
   DiagramGroupData,
   DiagramNodeData,
 } from "@/components/ModelingDiagram/diagram_types";
@@ -42,7 +34,7 @@ class UniqueStack<T> {
   }
 
   push(i: T) {
-    if (this.idx(i) !== -1) this.items.push(i);
+    if (this.idx(i) === -1) this.items.push(i);
   }
 
   remove(i: T) {
@@ -138,12 +130,18 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
          * */
         components: {} as Components,
         groups: {} as Groups,
-        edges: {} as Edges,
-        // DiagramNodeSocket can find isConnected here, so it doesn't re-render with every drag
-        edgeIds: new Set() as Set<DiagramElementUniqueKey>,
         sockets: {} as Sockets,
       }),
       getters: {
+        edges: (state) =>
+          Object.values(componentsStore.diagramEdgesById).filter((e) => {
+            const to = e.toNodeKey.substring(2);
+            const from = e.fromNodeKey.substring(2);
+            const componentIds = Object.keys(state.components).concat(
+              Object.keys(state.groups),
+            );
+            return componentIds.includes(to) && componentIds.includes(from);
+          }),
         selectedView: (state) => state.viewsById[state.selectedViewId || ""],
         // NOTE: this is computed for now, but we could easily make this state
         // and re-compute it for only which elements get moved (if it becomes a bottleneck)
@@ -223,10 +221,6 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
              * */
             this.components = view.components;
             this.groups = view.groups;
-            // currently edges store their socket location information
-            // internally... maybe we should stop that
-            // this.edges = view.edges;
-            // this.edgeIds = new Set(Object.keys(view.edges));
             // derive the socket position from the component position
             // to begin, and then adjust it via delta when things move
             this.sockets = view.sockets;
@@ -310,8 +304,7 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
               sockets[key] = loc;
             }
           }
-          // TODO
-          this.viewsById[viewId] = { components, groups, sockets };
+          this.viewsById[viewId] = { id: viewId, components, groups, sockets };
         },
         /**
          * @param clientUlid whoami
