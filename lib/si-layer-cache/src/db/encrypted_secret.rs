@@ -42,7 +42,7 @@ where
         }
     }
 
-    pub async fn write(
+    pub fn write(
         &self,
         key: EncryptedSecretKey,
         value: Arc<V>,
@@ -54,7 +54,7 @@ where
 
         let cache_key: Arc<str> = key.to_string().into();
 
-        self.cache.insert(cache_key.clone(), value.clone()).await;
+        self.cache.insert(cache_key.clone(), value.clone());
 
         let event = LayeredEvent::new(
             LayeredEventKind::EncryptedSecretInsertion,

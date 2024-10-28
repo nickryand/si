@@ -37,7 +37,7 @@ where
         }
     }
 
-    pub async fn write(
+    pub fn write(
         &self,
         value: Arc<V>,
         web_events: Option<Vec<WebEvent>>,
@@ -50,7 +50,7 @@ where
         let key = RebaseBatchAddress::new(&postcard_value);
         let cache_key: Arc<str> = key.to_string().into();
 
-        self.cache.insert(cache_key.clone(), value_clone).await;
+        self.cache.insert(cache_key.clone(), value_clone);
 
         let event = LayeredEvent::new(
             LayeredEventKind::RebaseBatchWrite,
@@ -102,7 +102,7 @@ where
         let mut tried = 0;
         let read_wait = Instant::now();
         while tried < MAX_TRIES {
-            if let Some(v) = self.cache.memory_cache().get(&key).await {
+            if let Some(v) = self.cache.cache().get(&key).await {
                 span.record("si.layer_cache.memory_cache.hit", true);
                 span.record(
                     "si.layer_cache.memory_cache.read_wait_ms",
@@ -134,7 +134,7 @@ where
         actor: Actor,
     ) -> LayerDbResult<PersisterStatusReader> {
         let cache_key = key.to_string();
-        self.cache.remove_from_memory(&cache_key).await;
+        self.cache.remove_from_memory(&cache_key);
 
         let event = LayeredEvent::new(
             LayeredEventKind::RebaseBatchEvict,

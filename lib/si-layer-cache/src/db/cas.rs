@@ -38,7 +38,7 @@ where
         }
     }
 
-    pub async fn write(
+    pub fn write(
         &self,
         value: Arc<V>,
         web_events: Option<Vec<WebEvent>>,
@@ -49,7 +49,7 @@ where
         let key = ContentHash::new(&postcard_value);
         let cache_key: Arc<str> = key.to_string().into();
 
-        self.cache.insert(cache_key.clone(), value.clone()).await;
+        self.cache.insert(cache_key.clone(), value.clone());
 
         let event = LayeredEvent::new(
             LayeredEventKind::CasInsertion,
