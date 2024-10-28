@@ -2607,10 +2607,7 @@ const groups = computed(() => {
 
 // TODO move this to the store
 const sockets = computed(() => {
-  const elements = _.concat(
-    Object.values(componentsStore.nodesById),
-    groups.value,
-  );
+  const elements = _.concat(nodes.value, groups.value);
   return _.compact(_.flatMap(elements, (i) => i.sockets));
 });
 
