@@ -1,8 +1,9 @@
 <template>
   <div ref="outlineRef" class="flex flex-col diagram-outline">
+    <LeftPanelDrawer :open="drawerIsOpen" @closed="toggleDrawer" />
     <ScrollArea>
       <template #top>
-        <SidebarSubpanelTitle icon="bullet-list-indented">
+        <SidebarSubpanelTitle icon="bullet-list-indented" @click="toggleDrawer">
           <template #label>
             <div class="flex flex-row gap-xs items-center">
               <div>Diagram Outline</div>
@@ -128,6 +129,7 @@ import SidebarSubpanelTitle from "@/components/SidebarSubpanelTitle.vue";
 
 import { useQualificationsStore } from "@/store/qualifications.store";
 import DiagramOutlineNode from "./DiagramOutlineNode.vue";
+import LeftPanelDrawer from "../LeftPanelDrawer.vue";
 import EmptyStateIcon from "../EmptyStateIcon.vue";
 import {
   DiagramGroupData,
@@ -148,6 +150,12 @@ const emit = defineEmits<{
     ev: { mouse: MouseEvent; component: Component },
   ): void;
 }>();
+
+const drawerIsOpen = ref<boolean>(false);
+
+const toggleDrawer = () => {
+  drawerIsOpen.value = !drawerIsOpen.value;
+};
 
 const componentsStore = useComponentsStore();
 const viewStore = useViewsStore();
