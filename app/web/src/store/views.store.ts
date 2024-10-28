@@ -84,9 +84,9 @@ const setSockets = (component: DiagramGroupData | DiagramNodeData) => {
     const center = {
       x:
         component.def.position.x +
-        // right.x + // this is actually 0, because its RTL
-        width -
-        SOCKET_SIZE + // so we add the full width, minus the size of the socket, b/c later code adds half the size of the socket
+        right.x +
+        width - // we add the full width to get to the right side...
+        SOCKET_SIZE + // minus the size of the socket, b/c later code adds half the size of the socket
         s.position.x,
       y: component.def.position.y + right.y + s.position.y,
     };
@@ -336,7 +336,13 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
               const newPos = vectorAdd({ ...orig }, positionDelta);
               orig.x = newPos.x;
               orig.y = newPos.y;
-              // TODO find all sockets and adjust
+
+              c.sockets.forEach((s) => {
+                const geo = this.sockets[s.uniqueKey];
+                if (!geo) return;
+                geo.center.x += positionDelta.x;
+                geo.center.y += positionDelta.y;
+              });
             });
           }
           // TODO, save, broadcast
@@ -359,7 +365,13 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
           this.groups[component.def.id] = { ...geometry };
 
           if (delta.x !== 0 || delta.y !== 0) {
-            // TODO, sockets need to be re-positioned if delta X or Y is not 0
+            // sockets need to be re-positioned if delta X or Y is not 0
+            component.sockets.forEach((s) => {
+              const geo = this.sockets[s.uniqueKey];
+              if (!geo) return;
+              geo.center.x += delta.x;
+              geo.center.y += delta.y;
+            });
           }
           // TODO, save, broadcast
         },
