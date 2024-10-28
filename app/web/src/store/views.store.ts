@@ -3,7 +3,14 @@ import { addStoreHooks, ApiRequest } from "@si/vue-lib/pinia";
 import { IRect, Vector2d } from "konva/lib/types";
 import { toRaw } from "vue";
 import { ChangeSetId } from "@/api/sdf/dal/change_set";
-import { ViewId, View, Components, Sockets, Groups } from "@/api/sdf/dal/views";
+import {
+  ViewId,
+  View,
+  Components,
+  Sockets,
+  Groups,
+  ViewDescription,
+} from "@/api/sdf/dal/views";
 import {
   DiagramGroupData,
   DiagramNodeData,
@@ -111,6 +118,15 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
     workspaceId,
   };
 
+  const API_PREFIX = [
+    "v2",
+    "workspaces",
+    { workspaceId },
+    "change-sets",
+    { changeSetId },
+    "views",
+  ];
+
   return addStoreHooks(
     workspaceId,
     changeSetId,
@@ -121,6 +137,7 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
 
         // every views data goes here
         viewsById: {} as Record<ViewId, View>,
+        viewList: [] as ViewDescription[],
 
         /* *
          * these hold the data for everything on the diagram in the SELECTED view
@@ -202,13 +219,18 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
         },
       },
       actions: {
-        selectView(id: ViewId) {
+        async selectView(id: ViewId) {
           const view = this.viewsById[id];
           if (view) {
             // move the currently selected view to the top of the
             if (this.selectedViewId) {
               this.pushRecentView(this.selectedViewId);
             }
+            /* if (!Object.keys(this.viewsById).includes(id)) {
+              await this.FETCH_VIEW(id);
+              if (!Object.keys(this.viewsById).includes(id))
+                throw new Error(`${id} does not exist`);
+            } */
             this.selectedViewId = id;
             /* *
              * i think i want to set these as in-memory references
@@ -233,13 +255,20 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
           this.recentViews.push(id);
         },
         async LIST_VIEWS() {
-          // TODO
+          return new ApiRequest<ViewDescription[]>({
+            method: "get",
+            url: API_PREFIX,
+            onSuccess: (views) => {
+              this.viewList = views;
+            },
+          });
         },
         // no viewId means load the default
         async FETCH_VIEW(viewId?: ViewId) {
           // TODO, fetch, and set to selected view
           return new ApiRequest<{
             viewId: ViewId;
+            viewName: string;
             components: RawComponent[];
             edges: RawEdge[];
             inferredEdges: RawEdge[];
@@ -261,10 +290,14 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
                   else components.push(c as DiagramNodeData);
                 }
               }
-              this.SET_COMPONENTS_FROM_VIEW(response.viewId, {
-                components,
-                groups,
-              });
+              this.SET_COMPONENTS_FROM_VIEW(
+                response.viewId,
+                response.viewName,
+                {
+                  components,
+                  groups,
+                },
+              );
               this.selectView(response.viewId);
 
               // fire this and don't wait for it
@@ -275,6 +308,7 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
         },
         SET_COMPONENTS_FROM_VIEW(
           viewId: ViewId,
+          viewName: string,
           response: {
             components: DiagramNodeData[];
             groups: DiagramGroupData[];
@@ -304,7 +338,13 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
               sockets[key] = loc;
             }
           }
-          this.viewsById[viewId] = { id: viewId, components, groups, sockets };
+          this.viewsById[viewId] = {
+            id: viewId,
+            name: viewName,
+            components,
+            groups,
+            sockets,
+          };
         },
         /**
          * @param clientUlid whoami

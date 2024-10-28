@@ -18,3 +18,9 @@ export interface View {
   groups: Groups;
   sockets: Sockets;
 }
+
+export interface ViewDescription {
+  id: ViewId;
+  name: string;
+  isDefault: boolean;
+}
