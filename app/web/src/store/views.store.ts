@@ -263,6 +263,31 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
             },
           });
         },
+        async CREATE_VIEW(name: string) {
+          return new ApiRequest<ViewDescription>({
+            method: "post",
+            url: API_PREFIX,
+            params: { name },
+            onSuccess: (view) => {
+              const idx = this.viewList.findIndex((v) => v.name === name);
+              // confirming we dont already have the data
+              if (idx === -1) this.viewList.push(view);
+            },
+          });
+        },
+        async UPDATE_VIEW_NAME(view_id: ViewId, name: string) {
+          return new ApiRequest<null>({
+            method: "put",
+            url: API_PREFIX.concat([view_id]),
+            params: { name },
+            optimistic: () => {
+              const v = this.viewList.find((v) => v.id === view_id);
+              if (v) v.name = name;
+              const _v = this.viewsById[view_id];
+              if (_v) _v.name = name;
+            },
+          });
+        },
         // no viewId means load the default
         async FETCH_VIEW(viewId?: ViewId) {
           // TODO, fetch, and set to selected view

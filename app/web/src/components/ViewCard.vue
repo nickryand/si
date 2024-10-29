@@ -17,8 +17,15 @@
       </TruncateWithTooltip>
     </div>
     <DropdownMenu ref="contextMenuRef" :forceAbove="false" forceAlignRight>
-      <DropdownMenuItem :onSelect="() => {}" label="Edit Name" />
-      <DropdownMenuItem :onSelect="() => {}" label="Delete View" />
+      <DropdownMenuItem
+        :onSelect="
+          () => {
+            modalRef?.open();
+          }
+        "
+        label="Edit Name"
+      />
+      <DropdownMenuItem disabled label="Delete View" />
     </DropdownMenu>
     <DetailsPanelMenuIcon
       :selected="contextMenuRef?.isOpen"
@@ -28,13 +35,31 @@
         }
       "
     />
+    <Modal
+      ref="modalRef"
+      type="save"
+      size="sm"
+      saveLabel="Save"
+      title="Update View Name"
+      @save="updateName"
+    >
+      <VormInput
+        ref="labelRef"
+        v-model="viewName"
+        required
+        label="View Name"
+        @enterPressed="updateName"
+      />
+    </Modal>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
 import {
+  Modal,
+  VormInput,
   DropdownMenu,
   DropdownMenuItem,
   TruncateWithTooltip,
@@ -54,6 +79,28 @@ const props = defineProps<{
 // const confirmRef = ref<InstanceType<typeof ConfirmHoldModal> | null>(null);
 
 const contextMenuRef = ref<InstanceType<typeof DropdownMenu>>();
+const modalRef = ref<InstanceType<typeof Modal>>();
+const labelRef = ref<InstanceType<typeof VormInput>>();
+
+const viewName = ref("");
+
+const updateName = (e?: Event) => {
+  e?.preventDefault();
+  if (!viewName.value) {
+    labelRef.value?.setError("Name is required");
+  } else {
+    viewStore.UPDATE_VIEW_NAME(props.view.id, viewName.value);
+    modalRef.value?.close();
+  }
+};
+
+watch(
+  props.view,
+  () => {
+    viewName.value = props.view.name;
+  },
+  { immediate: true },
+);
 
 const emit = defineEmits<{
   (e: "closeDrawer"): void;
