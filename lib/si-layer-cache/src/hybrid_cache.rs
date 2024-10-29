@@ -1,10 +1,9 @@
 use foyer::{
-    DirectFsDeviceOptions, Engine, HybridCache, HybridCacheBuilder, RateLimitPicker, RecoverMode,
-    TracingOptions,
+    DirectFsDeviceOptions, Engine, HybridCache, HybridCacheBuilder, LargeEngineOptions,
+    RateLimitPicker, RecoverMode,
 };
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
 use telemetry::tracing::error;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -14,8 +13,9 @@ use crate::error::LayerDbResult;
 use crate::LayerDbError;
 
 const SYSTEM_RESERVED_MEMORY_BYTES: u64 = 1024 * 1024 * 512; // 512mb
-const DEFAULT_TAIL_TRACING_THRESHOLD: Duration = Duration::from_millis(500);
-const DEFAULT_DISK_CACHE_RATE_LIMIT: usize = 1024 * 1024 * 100;
+const DEFAULT_DISK_CACHE_RATE_LIMIT: usize = 1024 * 1024 * 1024;
+const DEFAULT_DISK_BUFFER_SIZE: usize = 1024 * 1024 * 64; // 64mb
+const DEFAULT_DISK_BUFFER_FLUSHERS: usize = 2; // 64mb
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum MaybeDeserialized<V>
@@ -40,25 +40,22 @@ where
 {
     pub async fn new(config: CacheConfig) -> LayerDbResult<Self> {
         let cache = HybridCacheBuilder::new()
-            .with_name(&config.name)
-            .with_tracing_options(
-                TracingOptions::new()
-                    .with_record_hybrid_obtain_threshold(config.telemetry_tail_duration)
-                    .with_record_hybrid_insert_threshold(config.telemetry_tail_duration),
-            )
             .memory(config.memory as usize)
             .storage(Engine::Large)
             .with_admission_picker(Arc::new(RateLimitPicker::new(
                 config.disk_admission_rate_limit,
             )))
             .with_device_options(DirectFsDeviceOptions::new(config.disk))
+            .with_large_object_disk_cache_options(
+                LargeEngineOptions::new()
+                    .with_flushers(config.disk_buffer_flushers)
+                    .with_buffer_pool_size(config.disk_buffer_size),
+            )
             .with_recover_mode(RecoverMode::Quiet)
             .build()
             .await
             .map_err(|e| LayerDbError::Foyer(e.into()))?;
 
-        cache.enable_tracing();
-        dbg!(&cache);
         Ok(Self { cache })
     }
 
@@ -115,21 +112,26 @@ where
 pub struct CacheConfig {
     disk: PathBuf,
     disk_admission_rate_limit: usize,
+    disk_buffer_size: usize,
+    disk_buffer_flushers: usize,
     memory: u64,
     name: String,
-    telemetry_tail_duration: Duration,
 }
 
 impl Default for CacheConfig {
     fn default() -> Self {
         let sys = sysinfo::System::new_all();
+        let path = tempfile::TempDir::with_prefix_in("default-cache-", "/tmp")
+            .expect("unable to create tmp dir for layerdb")
+            .into_path();
 
         Self {
-            disk: "/tmp/layer_cache".into(),
+            disk: path,
             disk_admission_rate_limit: DEFAULT_DISK_CACHE_RATE_LIMIT,
+            disk_buffer_size: DEFAULT_DISK_BUFFER_SIZE,
+            disk_buffer_flushers: DEFAULT_DISK_BUFFER_FLUSHERS,
             memory: sys.total_memory() - SYSTEM_RESERVED_MEMORY_BYTES, //reserve for OS
             name: "default".to_string(),
-            telemetry_tail_duration: DEFAULT_TAIL_TRACING_THRESHOLD,
         }
     }
 }

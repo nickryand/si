@@ -35,7 +35,7 @@ where
         cache_config: CacheConfig,
         compute_executor: DedicatedExecutor,
     ) -> LayerDbResult<Self> {
-        let cache = Cache::new(cache_config).await.unwrap();
+        let cache = Cache::new(cache_config).await?;
 
         let pg = PgLayer::new(pg_pool.clone(), name);
 
