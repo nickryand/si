@@ -36,7 +36,6 @@ import {
 import { Resource } from "@/api/sdf/dal/resource";
 import { CodeView } from "@/api/sdf/dal/code_view";
 import ComponentUpgrading from "@/components/toasts/ComponentUpgrading.vue";
-import { DefaultMap } from "@/utils/defaultmap";
 import { nonNullable } from "@/utils/typescriptLinter";
 import handleStoreError from "./errors";
 import { useChangeSetsStore } from "./change_sets.store";
@@ -44,8 +43,6 @@ import { useAssetStore } from "./asset.store";
 import { useRealtimeStore } from "./realtime/realtime.store";
 import { useWorkspacesStore } from "./workspaces.store";
 import { useFeatureFlagsStore } from "./feature_flags.store";
-
-type RequestUlid = string;
 
 export type ComponentNodeId = string;
 
@@ -377,11 +374,6 @@ export const useComponentsStore = (forceChangeSetId?: ChangeSetId) => {
           refreshingStatus: {} as Record<ComponentId, boolean>,
 
           debugDataByComponentId: {} as Record<ComponentId, ComponentDebugView>,
-
-          // size of components when dragged to the stage
-          inflightElementSizes: {} as Record<RequestUlid, ComponentId[]>,
-          // prevents run away retries, unknown what circumstances could lead to this, but protecting ourselves
-          inflightRetryCounter: new DefaultMap<string, number>(() => 0),
         }),
         getters: {
           // transforming the diagram-y data back into more generic looking data

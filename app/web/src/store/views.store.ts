@@ -22,6 +22,7 @@ import {
   SOCKET_SIZE,
 } from "@/components/ModelingDiagram/diagram_constants";
 import { vectorAdd } from "@/components/ModelingDiagram/utils/math";
+import { DefaultMap } from "@/utils/defaultmap";
 import handleStoreError from "./errors";
 
 import { useChangeSetsStore } from "./change_sets.store";
@@ -29,6 +30,9 @@ import { useComponentsStore } from "./components.store";
 import { useRealtimeStore } from "./realtime/realtime.store";
 import { useWorkspacesStore } from "./workspaces.store";
 
+const MAX_RETRIES = 5;
+
+type RequestUlid = string;
 class UniqueStack<T> {
   items: T[];
 
@@ -148,6 +152,11 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
         components: {} as Components,
         groups: {} as Groups,
         sockets: {} as Sockets,
+
+        // size of components when dragged to the stage
+        inflightElementSizes: {} as Record<RequestUlid, ComponentId[]>,
+        // prevents run away retries, unknown what circumstances could lead to this, but protecting ourselves
+        inflightRetryCounter: new DefaultMap<string, number>(() => 0),
       }),
       getters: {
         edges: (state) =>
@@ -404,6 +413,59 @@ export const useViewsStore = (forceChangeSetId?: ChangeSetId) => {
             });
           }
           // TODO, save, broadcast
+          if (opts.writeToChangeSet) {
+            return new ApiRequest<{ requestUlid: RequestUlid }>({
+              method: "post",
+              url: "diagram/set_component_position",
+              params: {
+                // TODO params
+                ...visibilityParams,
+              },
+              onFail: (err) => {
+                // only handle conflicts here
+                if (err.response.status !== 409) {
+                  return;
+                }
+                const reqPayload = JSON.parse(err.config.data);
+
+                // are the components that failed currently inflight?
+                // if not, resend their latest data
+                const failed =
+                  this.inflightElementSizes[reqPayload.requestUlid];
+                if (!failed) return;
+                delete this.inflightElementSizes[reqPayload.requestUlid];
+                const all_inflight_components = new Set(
+                  Object.values(this.inflightElementSizes).flat(),
+                );
+
+                const maybe_retry = failed.filter(
+                  (x) => !all_inflight_components.has(x),
+                );
+
+                const prevent = new Set();
+                for (const componentId of maybe_retry) {
+                  const cnt =
+                    (this.inflightRetryCounter.get(componentId) || 0) + 1;
+                  if (cnt > MAX_RETRIES) prevent.add(componentId);
+                  else this.inflightRetryCounter.set(componentId, cnt);
+                }
+
+                if (prevent.size > 0) throw Error("Too many retries");
+
+                const retry = maybe_retry.filter((x) => !prevent.has(x));
+
+                if (retry.length > 0) {
+                  for (const componentId of retry) {
+                    // get geometry
+                  }
+                  // this.SET_COMPONENT_GEOMETRY(payload, clientUlid);
+                }
+              },
+              onSuccess: (response) => {
+                delete this.inflightElementSizes[response.requestUlid];
+              },
+            });
+          }
         },
         async RESIZE_COMPONENT(
           clientUlid: string,
