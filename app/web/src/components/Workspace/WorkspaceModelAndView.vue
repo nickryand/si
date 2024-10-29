@@ -22,6 +22,7 @@
 
   <ModelingDiagram
     ref="diagramRef"
+    :viewId="route.params.viewId  as (string | undefined)"
     @mouseout="presenceStore.clearCursor"
     @right-click-element="onRightClickElement"
   />
@@ -66,6 +67,7 @@
 
 <script lang="ts" setup>
 import * as _ from "lodash-es";
+import { useRoute } from "vue-router";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { ResizablePanel } from "@si/vue-lib/design-system";
 import ComponentDetails from "@/components/ComponentDetails.vue";
@@ -99,6 +101,8 @@ const actionsStore = useActionsStore();
 const presenceStore = usePresenceStore();
 const _secretsStore = useSecretsStore(); // adding this so we fetch once
 const statusStore = useStatusStore();
+
+const route = useRoute();
 
 const actionsAreRunning = computed(
   () =>

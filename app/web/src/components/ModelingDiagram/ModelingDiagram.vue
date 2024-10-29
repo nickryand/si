@@ -255,7 +255,6 @@ import {
   onBeforeUnmount,
   reactive,
   watch,
-  PropType,
   InjectionKey,
   ComputedRef,
   Ref,
@@ -292,6 +291,7 @@ import { ComponentType } from "@/api/sdf/dal/schema";
 import { useStatusStore } from "@/store/status.store";
 import { useQualificationsStore } from "@/store/qualifications.store";
 import { nonNullable } from "@/utils/typescriptLinter";
+import { ViewId } from "@/api/sdf/dal/views";
 import DiagramGridBackground from "./DiagramGridBackground.vue";
 import {
   DiagramDrawEdgeState,
@@ -358,14 +358,11 @@ const qualificationStore = useQualificationsStore();
 // scroll pan multiplied by this and zoom level when panning
 const ZOOM_PAN_FACTOR = 0.5;
 
-const props = defineProps({
-  cursors: {
-    type: Array as PropType<DiagramCursorDef[]>,
-    default: () => [],
-  },
-  // TODO: split this into controls for specific features rather than single toggle
-  readOnly: { type: Boolean },
-});
+const props = defineProps<{
+  cursors?: DiagramCursorDef[];
+  viewId: ViewId | undefined;
+  readOnly?: boolean;
+}>();
 
 const emit = defineEmits<{
   (e: "right-click-element", elRightClickInfo: RightClickElementEvent): void;
