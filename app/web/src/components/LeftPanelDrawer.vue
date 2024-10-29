@@ -30,20 +30,22 @@
         />
       </div>
 
+      <SiSearch
+        ref="searchRef"
+        placeholder="search views"
+        @search="onSearchUpdated"
+      />
+
       <div>
-        <ViewCard
-          v-for="view in viewStore.viewList"
-          :key="view.id"
-          :view="view"
-        />
+        <ViewCard v-for="view in filteredViews" :key="view.id" :view="view" />
       </div>
     </div>
   </Transition>
 </template>
 
 <script lang="ts" setup>
-import { computed } from "vue";
-import { Icon, PillCounter } from "@si/vue-lib/design-system";
+import { computed, ref } from "vue";
+import { Icon, PillCounter, SiSearch } from "@si/vue-lib/design-system";
 import { useViewsStore } from "@/store/views.store";
 import ViewCard from "./ViewCard.vue";
 
@@ -58,4 +60,18 @@ const emit = defineEmits<{
 }>();
 
 const viewCount = computed(() => viewStore.viewList.length);
+
+const searchRef = ref<InstanceType<typeof SiSearch>>();
+const searchTerm = ref("");
+
+const onSearchUpdated = (q: string) => {
+  searchTerm.value = q;
+};
+
+const filteredViews = computed(() => {
+  if (!searchTerm.value) return viewStore.viewList;
+  return viewStore.viewList.filter((v) =>
+    v.name.toLowerCase().includes(searchTerm.value.toLowerCase()),
+  );
+});
 </script>
