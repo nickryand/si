@@ -7,10 +7,10 @@
   >
     <div
       v-if="open"
-      class="absolute w-[230px] h-full left-[0px] bg-white dark:bg-neutral-800 z-100"
+      class="absolute w-[230px] h-full left-[0px] bg-white dark:bg-neutral-800 z-100 border-r-[3px] shadow-[4px_0_6px_3px_rgba(0,0,0,0.33)] border-neutral-300 border-color: dark:border-neutral-600"
     >
       <div
-        class="flex flex-row items-center gap-xs m-xs mt-0 font-bold border-b dark:border-neutral-500 py-2xs"
+        class="flex flex-row items-center gap-xs ml-xs mb-xs font-bold border-b dark:border-neutral-500 py-2xs"
       >
         <Icon
           class="cursor-pointer"
