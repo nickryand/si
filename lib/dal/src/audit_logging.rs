@@ -3,52 +3,45 @@
 use audit_logs::AuditLogsError;
 use audit_logs::AuditLogsStream;
 use chrono::Utc;
+use futures::StreamExt;
 use pending_events::PendingEventsError;
 use pending_events::PendingEventsStream;
 use shuttle_server::Shuttle;
 use shuttle_server::ShuttleError;
+use si_data_nats::async_nats;
+use si_data_nats::async_nats::jetstream::consumer::pull::BatchErrorKind;
+use si_data_nats::async_nats::jetstream::stream::ConsumerErrorKind;
 use si_events::audit_log::AuditLog;
 use si_events::audit_log::AuditLogKind;
+use si_frontend_types::AuditLog as FrontendAuditLog;
 use telemetry::prelude::*;
 use thiserror::Error;
 use tokio_util::task::TaskTracker;
-use ulid::MonotonicError;
 
 use crate::DalContext;
 use crate::TenancyError;
-use crate::{ChangeSetError, ChangeSetId, TransactionsError, WorkspaceError, WorkspacePk};
-
-mod fake_data_for_frontend;
-
-pub use fake_data_for_frontend::filter_and_paginate;
-pub use fake_data_for_frontend::generate;
+use crate::TransactionsError;
 
 #[remain::sorted]
 #[derive(Debug, Error)]
 pub enum AuditLoggingError {
+    #[error("async nats batch error: {0}")]
+    AsyncNatsBatch(#[from] async_nats::error::Error<BatchErrorKind>),
+    #[error("async nats consumer error: {0}")]
+    AsyncNatsConsumer(#[from] async_nats::error::Error<ConsumerErrorKind>),
     #[error("audit logs error: {0}")]
     AuditLogs(#[from] AuditLogsError),
-    #[error("change set error: {0}")]
-    ChangeSet(#[from] Box<ChangeSetError>),
-    #[error("change set not found: {0}")]
-    ChangeSetNotFound(ChangeSetId),
-    #[error("monotonic error: {0}")]
-    Monotonic(#[from] MonotonicError),
     #[error("pending events error: {0}")]
     PendingEventsError(#[from] PendingEventsError),
+    #[error("serde json error: {0}")]
+    SerdeJson(#[from] serde_json::Error),
     #[error("shuttle error: {0}")]
     Shuttle(#[from] ShuttleError),
     #[error("transactions error: {0}")]
     Transactions(#[from] Box<TransactionsError>),
-    #[error("ulid decode error: {0}")]
-    UlidDecode(#[from] ulid::DecodeError),
-    #[error("workspace error: {0}")]
-    Workspace(#[from] Box<WorkspaceError>),
-    #[error("workspace not found: {0}")]
-    WorkspaceNotFound(WorkspacePk),
 }
 
-pub type AuditLoggingResult<T> = Result<T, AuditLoggingError>;
+type Result<T> = std::result::Result<T, AuditLoggingError>;
 
 /// Publishes all pending [`AuditLogs`](AuditLog) to the audit logs stream for the event session.
 ///
@@ -66,7 +59,7 @@ pub(crate) async fn publish_pending(
     ctx: &DalContext,
     tracker: Option<TaskTracker>,
     override_event_session_id: Option<si_events::EventSessionId>,
-) -> AuditLoggingResult<()> {
+) -> Result<()> {
     // TODO(nick): nuke this from intergalactic orbit. Then do it again.
     let workspace_id = match ctx.workspace_pk() {
         Ok(workspace_id) => workspace_id,
@@ -125,7 +118,7 @@ pub(crate) async fn publish_pending(
 }
 
 #[instrument(name = "audit_logging.write", level = "debug", skip_all, fields(kind))]
-pub(crate) async fn write(ctx: &DalContext, kind: AuditLogKind) -> AuditLoggingResult<()> {
+pub(crate) async fn write(ctx: &DalContext, kind: AuditLogKind) -> Result<()> {
     // TODO(nick): nuke this from intergalactic orbit. Then do it again.
     let workspace_id = match ctx.workspace_pk() {
         Ok(workspace_id) => workspace_id,
@@ -133,21 +126,26 @@ pub(crate) async fn write(ctx: &DalContext, kind: AuditLogKind) -> AuditLoggingR
         Err(err) => return Err(AuditLoggingError::Transactions(Box::new(err))),
     };
 
-    let pending_events_work_queue =
-        PendingEventsStream::get_or_create(ctx.jetstream_context()).await?;
-    pending_events_work_queue
+    let pending_events_stream = PendingEventsStream::get_or_create(ctx.jetstream_context()).await?;
+    pending_events_stream
         .publish_audit_log(
             workspace_id.into(),
             ctx.change_set_id().into(),
             ctx.event_session_id(),
-            &AuditLog::new(ctx.events_actor(), kind, Utc::now()),
+            &AuditLog::new(
+                ctx.events_actor(),
+                kind,
+                Utc::now(),
+                workspace_id.into(),
+                ctx.change_set_id().into(),
+            ),
         )
         .await?;
     Ok(())
 }
 
 #[instrument(name = "audit_logging.write_final_message", level = "debug", skip_all)]
-pub(crate) async fn write_final_message(ctx: &DalContext) -> AuditLoggingResult<()> {
+pub(crate) async fn write_final_message(ctx: &DalContext) -> Result<()> {
     // TODO(nick): nuke this from intergalactic orbit. Then do it again.
     let workspace_id = match ctx.workspace_pk() {
         Ok(workspace_id) => workspace_id,
@@ -155,9 +153,8 @@ pub(crate) async fn write_final_message(ctx: &DalContext) -> AuditLoggingResult<
         Err(err) => return Err(AuditLoggingError::Transactions(Box::new(err))),
     };
 
-    let pending_events_work_queue =
-        PendingEventsStream::get_or_create(ctx.jetstream_context()).await?;
-    pending_events_work_queue
+    let pending_events_stream = PendingEventsStream::get_or_create(ctx.jetstream_context()).await?;
+    pending_events_stream
         .publish_audit_log_final_message(
             workspace_id.into(),
             ctx.change_set_id().into(),
@@ -165,4 +162,142 @@ pub(crate) async fn write_final_message(ctx: &DalContext) -> AuditLoggingResult<
         )
         .await?;
     Ok(())
+}
+
+#[instrument(name = "audit_logging.list", level = "debug", skip_all)]
+pub async fn list(ctx: &DalContext) -> Result<Vec<FrontendAuditLog>> {
+    // TODO(nick): nuke this from intergalactic orbit. Then do it again.
+    let workspace_id = match ctx.workspace_pk() {
+        Ok(workspace_id) => workspace_id,
+        Err(TransactionsError::Tenancy(TenancyError::NoWorkspace)) => return Ok(Vec::new()),
+        Err(err) => return Err(AuditLoggingError::Transactions(Box::new(err))),
+    };
+
+    let stream_wrapper = AuditLogsStream::get_or_create(ctx.jetstream_context()).await?;
+    let stream = stream_wrapper.stream().await?;
+    let consumer = stream
+        .create_consumer(async_nats::jetstream::consumer::pull::Config {
+            filter_subject: stream_wrapper.subject(workspace_id.into()).to_string(),
+            ..Default::default()
+        })
+        .await?;
+
+    // TODO(nick): remove hard-coded value.
+    let mut messages = consumer.fetch().max_messages(200).messages().await?;
+    let mut frontend_audit_logs = Vec::new();
+
+    while let Some(Ok(message)) = messages.next().await {
+        let audit_log: AuditLog = serde_json::from_slice(&message.payload)?;
+        match audit_log {
+            AuditLog::V2(inner) => {
+                frontend_audit_logs.push(FrontendAuditLog {
+                    actor: inner.actor,
+                    kind: inner.kind,
+                    timestamp: inner.timestamp,
+                    workspace_id: inner.workspace_id,
+                    change_set_id: inner.change_set_id,
+                    actor_name: None,
+                    actor_email: None,
+                    origin_ip_address: None,
+                    workspace_name: None,
+                    change_set_name: None,
+                });
+            }
+            AuditLog::V1(_) => {
+                trace!("skipping older audit logs in beta...");
+            }
+        }
+    }
+
+    Ok(frontend_audit_logs)
+}
+
+pub mod temporary {
+    use std::collections::HashSet;
+
+    use si_events::audit_log::AuditLogKind;
+    use si_events::Actor;
+    use si_events::ChangeSetId;
+    use si_events::UserPk;
+    use si_frontend_types::AuditLog as FrontendAuditLog;
+
+    use super::Result;
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn filter_and_paginate(
+        audit_logs: Vec<FrontendAuditLog>,
+        page: Option<usize>,
+        page_size: Option<usize>,
+        sort_timestamp_ascending: Option<bool>,
+        exclude_system_user: Option<bool>,
+        kind_filter: HashSet<AuditLogKind>,
+        change_set_filter: HashSet<ChangeSetId>,
+        user_filter: HashSet<UserPk>,
+    ) -> Result<(Vec<FrontendAuditLog>, usize)> {
+        // First, filter the logs based on our chosen filters. This logic works by processing each
+        // audit log and assuming each log is within our desired scope by default. The instant that a
+        // log does not meet our scope, we continue!
+        let mut filtered_audit_logs = Vec::new();
+        for audit_log in audit_logs {
+            if !kind_filter.is_empty() && !kind_filter.contains(&audit_log.kind) {
+                continue;
+            }
+
+            if let Some(change_set_id) = &audit_log.change_set_id {
+                if !change_set_filter.is_empty() && !change_set_filter.contains(change_set_id) {
+                    continue;
+                }
+            } else if !change_set_filter.is_empty() {
+                continue;
+            }
+
+            match &audit_log.actor {
+                Actor::User(user_pk) => {
+                    if !user_filter.is_empty() && !user_filter.contains(user_pk) {
+                        continue;
+                    }
+                }
+                Actor::System => {
+                    if let Some(true) = exclude_system_user {
+                        continue;
+                    }
+                }
+            }
+
+            filtered_audit_logs.push(audit_log);
+        }
+
+        // After filtering, perform the sort.
+        if let Some(true) = sort_timestamp_ascending {
+            filtered_audit_logs.reverse();
+        }
+
+        // Count the number of audit logs after filtering, but before pagination. We need this so that
+        // the frontend can know how many pages exists when paginating data.
+        let total = filtered_audit_logs.len();
+
+        // Finally, paginate and return.
+        Ok((paginate(filtered_audit_logs, page, page_size), total))
+    }
+
+    fn paginate(
+        logs: Vec<FrontendAuditLog>,
+        page: Option<usize>,
+        page_size: Option<usize>,
+    ) -> Vec<FrontendAuditLog> {
+        if let Some(page_size) = page_size {
+            let target_page = page.unwrap_or(1);
+
+            let mut current_page = 1;
+            for chunk in logs.chunks(page_size) {
+                if current_page == target_page {
+                    return chunk.to_vec();
+                }
+                current_page += 1;
+            }
+            logs
+        } else {
+            logs
+        }
+    }
 }

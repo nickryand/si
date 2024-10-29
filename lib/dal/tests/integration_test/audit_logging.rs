@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use audit_logs::AuditLogsStream;
 use dal::{audit_logging, Component, DalContext, Schema};
 use dal_test::{
@@ -7,29 +5,8 @@ use dal_test::{
     test,
 };
 use pending_events::PendingEventsStream;
+use pretty_assertions_sorted::assert_eq;
 use si_events::audit_log::AuditLogKind;
-
-#[test]
-async fn generation_filtering_pagination(ctx: &DalContext) {
-    let audit_logs = audit_logging::generate(ctx, 200)
-        .await
-        .expect("could not generate audit logs");
-    let (filtered_and_paginated_audit_logs, _) = audit_logging::filter_and_paginate(
-        audit_logs,
-        Some(2),
-        Some(25),
-        None,
-        None,
-        HashSet::new(),
-        HashSet::new(),
-        HashSet::new(),
-    )
-    .expect("could not filter and paginate");
-    assert_eq!(
-        25,                                      // expected
-        filtered_and_paginated_audit_logs.len()  // actual
-    )
-}
 
 #[test]
 async fn round_trip(ctx: &mut DalContext) {
@@ -93,6 +70,17 @@ async fn round_trip(ctx: &mut DalContext) {
             .messages
     );
 
+    // List all audit logs twice to ensure we don't consume/ack them. After that, check that they
+    // look as we expect.
+    let first_run_audit_logs = audit_logging::list(ctx)
+        .await
+        .expect("could not list audit logs");
+    let second_run_audit_logs = audit_logging::list(ctx)
+        .await
+        .expect("could not list audit logs");
+    assert_eq!(first_run_audit_logs, second_run_audit_logs);
+    assert_eq!(3, first_run_audit_logs.len());
+
     // Update a property editor value and commit. Mimic sdf by audit logging here.
     ctx.write_audit_log(AuditLogKind::UpdatePropertyEditorValue)
         .await
@@ -129,6 +117,17 @@ async fn round_trip(ctx: &mut DalContext) {
             .messages
     );
 
+    // List all audit logs twice to ensure we don't consume/ack them. After that, check that they
+    // look as we expect.
+    let first_run_audit_logs = audit_logging::list(ctx)
+        .await
+        .expect("could not list audit logs");
+    let second_run_audit_logs = audit_logging::list(ctx)
+        .await
+        .expect("could not list audit logs");
+    assert_eq!(first_run_audit_logs, second_run_audit_logs);
+    assert_eq!(5, first_run_audit_logs.len());
+
     // Delete a component and commit. Mimic sdf by audit logging here.
     ctx.write_audit_log(AuditLogKind::DeleteComponent)
         .await
@@ -161,4 +160,15 @@ async fn round_trip(ctx: &mut DalContext) {
             .state
             .messages
     );
+
+    // List all audit logs twice to ensure we don't consume/ack them. After that, check that they
+    // look as we expect.
+    let first_run_audit_logs = audit_logging::list(ctx)
+        .await
+        .expect("could not list audit logs");
+    let second_run_audit_logs = audit_logging::list(ctx)
+        .await
+        .expect("could not list audit logs");
+    assert_eq!(first_run_audit_logs, second_run_audit_logs);
+    assert_eq!(6, first_run_audit_logs.len());
 }
