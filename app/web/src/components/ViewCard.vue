@@ -11,7 +11,7 @@
   >
     <div class="flex flex-col flex-grow min-w-0">
       <TruncateWithTooltip class="w-full">
-        <span class="font-bold">
+        <span class="text-sm">
           {{ view.name }}
         </span>
       </TruncateWithTooltip>
@@ -91,6 +91,7 @@ const updateName = (e?: Event) => {
   } else {
     viewStore.UPDATE_VIEW_NAME(props.view.id, viewName.value);
     modalRef.value?.close();
+    viewName.value = "";
   }
 };
 

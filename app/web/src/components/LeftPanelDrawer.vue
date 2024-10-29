@@ -10,7 +10,7 @@
       class="absolute w-[230px] h-full left-[0px] bg-white dark:bg-neutral-800 z-100 border-r-[3px] shadow-[4px_0_6px_3px_rgba(0,0,0,0.33)] border-neutral-300 border-color: dark:border-neutral-600"
     >
       <div
-        class="flex flex-row items-center gap-xs pl-xs font-bold border-b dark:border-neutral-500 py-2xs"
+        class="flex flex-row justify-between items-center gap-xs pl-xs font-bold border-b dark:border-neutral-500 py-2xs"
       >
         <Icon
           class="cursor-pointer"
@@ -18,16 +18,41 @@
           size="sm"
           @click="() => emit('closed')"
         />
-        <div
-          class="uppercase text-md leading-6 text-neutral-500 dark:text-neutral-400"
-        >
-          Views
+        <div>
+          <span
+            class="uppercase text-md leading-6 text-neutral-500 dark:text-neutral-400"
+          >
+            Views
+          </span>
+          <PillCounter
+            :count="viewCount"
+            hideIfZero
+            :paddingX="viewCount < 10 ? 'xs' : '2xs'"
+          />
         </div>
-        <PillCounter
-          :count="viewCount"
-          hideIfZero
-          :paddingX="viewCount < 10 ? 'xs' : '2xs'"
+        <IconButton
+          icon="plus"
+          size="sm"
+          tooltip="Create a new View"
+          @click="newView"
         />
+
+        <Modal
+          ref="modalRef"
+          type="save"
+          size="sm"
+          saveLabel="Create"
+          title="Create View"
+          @save="create"
+        >
+          <VormInput
+            ref="labelRef"
+            v-model="viewName"
+            required
+            label="View Name"
+            @enterPressed="create"
+          />
+        </Modal>
       </div>
 
       <SiSearch
@@ -45,7 +70,14 @@
 
 <script lang="ts" setup>
 import { computed, ref } from "vue";
-import { Icon, PillCounter, SiSearch } from "@si/vue-lib/design-system";
+import {
+  Icon,
+  PillCounter,
+  SiSearch,
+  IconButton,
+  Modal,
+  VormInput,
+} from "@si/vue-lib/design-system";
 import { useViewsStore } from "@/store/views.store";
 import ViewCard from "./ViewCard.vue";
 
@@ -74,4 +106,22 @@ const filteredViews = computed(() => {
     v.name.toLowerCase().includes(searchTerm.value.toLowerCase()),
   );
 });
+
+const modalRef = ref<InstanceType<typeof Modal>>();
+const labelRef = ref<InstanceType<typeof VormInput>>();
+const viewName = ref("");
+
+const newView = () => {
+  modalRef.value?.open();
+};
+
+const create = async () => {
+  if (!viewName.value) {
+    labelRef.value?.setError("Name is required");
+  } else {
+    await viewStore.CREATE_VIEW(viewName.value);
+    modalRef.value?.close();
+    viewName.value = "";
+  }
+};
 </script>
