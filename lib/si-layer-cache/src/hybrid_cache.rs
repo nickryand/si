@@ -14,7 +14,7 @@ use crate::LayerDbError;
 
 const SYSTEM_RESERVED_MEMORY_BYTES: u64 = 1024 * 1024 * 512; // 512mb
 const DEFAULT_DISK_CACHE_RATE_LIMIT: usize = 1024 * 1024 * 1024;
-const DEFAULT_DISK_BUFFER_SIZE: usize = 1024 * 1024 * 64; // 64mb
+const DEFAULT_DISK_BUFFER_SIZE: usize = 1024 * 1024 * 128; // 64mb
 const DEFAULT_DISK_BUFFER_FLUSHERS: usize = 2; // 64mb
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -51,7 +51,7 @@ where
                     .with_flushers(config.disk_buffer_flushers)
                     .with_buffer_pool_size(config.disk_buffer_size),
             )
-            .with_recover_mode(RecoverMode::Quiet)
+            .with_recover_mode(RecoverMode::None)
             .build()
             .await
             .map_err(|e| LayerDbError::Foyer(e.into()))?;
